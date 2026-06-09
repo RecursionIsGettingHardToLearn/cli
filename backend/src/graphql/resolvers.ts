@@ -333,12 +333,22 @@ export const resolvers = {
 
     async crearUsuario(
       _p: unknown,
-      args: { nombre: string; email: string; password: string; rol: Rol },
+      args: {
+        nombre: string; email: string; password: string; rol: Rol;
+        ci?: string | null; apellido?: string | null;
+        telefono?: string | null; fechaNacimiento?: Date | null;
+      },
       ctx: Ctx,
     ) {
       requireRole(ctx, 'ADMINISTRADOR');
       const nombre = args.nombre?.trim();
       const email = args.email?.trim().toLowerCase();
+      // Campos clinicos extra (solo se usan si el rol es PACIENTE).
+      const ci = args.ci?.trim();
+      const apellido = args.apellido?.trim();
+      const telefono = args.telefono?.trim() || null;
+      const fechaNacimiento = args.fechaNacimiento ?? null;
+      const esPaciente = args.rol === 'PACIENTE';
       if (!nombre || !email || !args.password || args.password.length < 6) {
         throw new GraphQLError('Nombre, email y password (minimo 6 caracteres) son obligatorios', {
           extensions: { code: 'BAD_USER_INPUT' },
@@ -351,6 +361,33 @@ export const resolvers = {
       });
       if (dup) {
         throw new GraphQLError('Ya existe un usuario con ese email', { extensions: { code: 'BAD_USER_INPUT' } });
+      }
+
+      // Para PACIENTE creamos tambien su ficha (tabla paciente), que es la que
+      // lleva el ci y el email por los que preguntan las automatizaciones (n8n).
+      // Validamos TODO aqui, ANTES de tocar Supabase, para no dejar cuentas
+      // huerfanas si la ficha no se puede crear (ci/email duplicado, etc.).
+      if (esPaciente) {
+        if (!ci) {
+          throw new GraphQLError('El CI (cedula de identidad) es obligatorio para un paciente', {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
+        }
+        if (!apellido) {
+          throw new GraphQLError('El apellido es obligatorio para un paciente', {
+            extensions: { code: 'BAD_USER_INPUT' },
+          });
+        }
+        const dupCi = await ctx.prisma.paciente.findUnique({ where: { ci } });
+        if (dupCi) {
+          throw new GraphQLError('Ya existe un paciente con ese CI', { extensions: { code: 'BAD_USER_INPUT' } });
+        }
+        const dupPacEmail = await ctx.prisma.paciente.findFirst({
+          where: { email: { equals: email, mode: 'insensitive' } },
+        });
+        if (dupPacEmail) {
+          throw new GraphQLError('Ya existe un paciente con ese email', { extensions: { code: 'BAD_USER_INPUT' } });
+        }
       }
 
       // 1) Crear la cuenta REAL de login en Supabase Auth (Admin API, service role).
@@ -390,9 +427,30 @@ export const resolvers = {
       }
 
       // 2) Fila local con el uid REAL: el lazy-provisioning de me() la respetara tal cual.
-      return ctx.prisma.usuario.create({
+      const usuario = await ctx.prisma.usuario.create({
         data: { supabaseUid: uid, nombre, email, rolId: rolRow.id, activo: true },
       });
+
+      // 3) Si es PACIENTE, creamos su ficha clinica enlazada por supabaseUid.
+      //    Comparte nombre/email con la cuenta y agrega los campos extra
+      //    (ci, apellido, telefono, fechaNacimiento). Queda buscable por
+      //    ci/email desde el primer momento (n8n) y ya vinculada a su login,
+      //    sin depender del auto-enlace por email del primer inicio de sesion.
+      if (esPaciente) {
+        await ctx.prisma.paciente.create({
+          data: {
+            supabaseUid: uid,
+            ci: ci!,
+            nombre,
+            apellido: apellido!,
+            email,
+            telefono,
+            fechaNacimiento,
+          },
+        });
+      }
+
+      return usuario;
     },
 
     // ---------- Notificaciones push (Expo) ----------

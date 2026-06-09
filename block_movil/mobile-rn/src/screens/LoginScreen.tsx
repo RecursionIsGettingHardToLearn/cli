@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 export function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
 
@@ -42,13 +43,26 @@ export function LoginScreen() {
         />
 
         <Text style={styles.label}>Contraseña</Text>
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholder="********"
-          style={styles.input}
-        />
+        <View style={styles.passwordWrap}>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder="********"
+            style={styles.passwordInput}
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword((v) => !v)}
+            style={styles.eyeBtn}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity
           onPress={onSubmit}
@@ -76,6 +90,14 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#d1d5db', borderRadius: 6,
     padding: 12, marginTop: 6, fontSize: 14,
   },
+  passwordWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: '#d1d5db', borderRadius: 6,
+    marginTop: 6, paddingRight: 6,
+  },
+  passwordInput: { flex: 1, padding: 12, fontSize: 14 },
+  eyeBtn: { padding: 8 },
+  eyeIcon: { fontSize: 20 },
   btn: {
     backgroundColor: '#0f6e56', borderRadius: 6, paddingVertical: 14,
     marginTop: 20, alignItems: 'center',

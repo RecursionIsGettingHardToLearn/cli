@@ -115,7 +115,20 @@ export const typeDefs = /* GraphQL */ `
     actualizarUsuario(id: ID!, nombre: String, email: String): Usuario!
     desactivarUsuario(id: ID!): Usuario!
     activarUsuario(id: ID!): Usuario!
-    crearUsuario(nombre: String!, email: String!, password: String!, rol: RolNombre!): Usuario!
+    # Al crear un usuario con rol PACIENTE se crea TAMBIEN su ficha en la tabla
+    # paciente (misma cuenta), por eso admite los campos clinicos extra. Para
+    # otros roles esos campos se ignoran. ci y apellido son obligatorios si el
+    # rol es PACIENTE (el ci es lo que buscan las automatizaciones n8n).
+    crearUsuario(
+      nombre: String!
+      email: String!
+      password: String!
+      rol: RolNombre!
+      ci: String
+      apellido: String
+      telefono: String
+      fechaNacimiento: DateTime
+    ): Usuario!
 
     # --- Notificaciones push (Expo) ---
     # Registra el ExpoPushToken del dispositivo del usuario autenticado.
