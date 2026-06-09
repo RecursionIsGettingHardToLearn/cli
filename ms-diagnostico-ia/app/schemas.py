@@ -1,0 +1,53 @@
+from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class ChatTriajeRequest(BaseModel):
+    mensaje: str = Field(min_length=1, max_length=4000)
+    historial: list[dict[str, str]] = []
+    paciente_id: str | None = None
+
+
+class ChatTriajeResponse(BaseModel):
+    respuesta: str
+    especialidad: str
+    urgencia: str
+    agendar: bool
+    confianza: float
+    proveedor: str
+    signos_alarma: list[str] = []
+    recomendaciones: list[str] = []
+
+
+class DocumentoResponse(BaseModel):
+    id: int
+    paciente_id: str | None
+    nombre_original: str
+    content_type: str | None
+    tamano_bytes: int
+    descripcion: str | None
+    creado_en: datetime
+
+
+class ImagenAnalisisResponse(BaseModel):
+    documento: DocumentoResponse | None = None
+    proveedor: str
+    tipo_imagen: str
+    hallazgos: list[str]
+    urgencia: str
+    recomendacion: str
+    confianza: float
+    nota_seguridad: str
+
+
+class ResultadoResponse(BaseModel):
+    id: int
+    paciente_id: str | None
+    documento_id: int | None
+    tipo: str
+    proveedor: str
+    resultado: dict[str, Any]
+    creado_en: datetime
+

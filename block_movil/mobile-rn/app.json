@@ -74,7 +74,7 @@
       "supabaseAnonKey": "sb_publishable_m3dGlmk_nlhi5KCETDRxQw_Ce1nYuET",
       "graphqlUrl": "http://192.168.1.100:3000/api/graphql",
       "blockchainUrl": "http://192.168.1.100:3001",
-      "diagnosticosUrl": "http://localhost:8000",
+      "diagnosticosUrl": "http://192.168.1.100:8000",
       "amoyRpcUrl": "https://rpc-amoy.polygon.technology",
       "blockchainContractAddress": "0xBa43Cc53c22851505179e0163A24E77681374805",
       "blockchainChainId": 80002,

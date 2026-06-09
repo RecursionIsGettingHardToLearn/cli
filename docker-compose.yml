@@ -92,6 +92,24 @@ services:
       - ./block_movil/ms-blockchain/.env
 
   # ----------------------------------------------------
+  # MS2: Diagnostico e IA (Python/FastAPI, Puerto 8000)
+  # ----------------------------------------------------
+  ms-diagnostico-ia:
+    build:
+      context: ./ms-diagnostico-ia
+    container_name: clinica-ms-diagnostico-ia
+    working_dir: /app
+    volumes:
+      - ./ms-diagnostico-ia/app:/app/app
+      - ms_ia_data:/app/data
+    ports:
+      - "8000:8000"
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - ./ms-diagnostico-ia/.env
+
+  # ----------------------------------------------------
   # n8n: Motor de automatizacion (Puerto 5678)
   # ----------------------------------------------------
   n8n:
@@ -164,6 +182,7 @@ volumes:
   backend_node_modules:
   backend_next_cache:
   blockchain_node_modules:
+  ms_ia_data:
   maven_cache:
   n8n_data:
   evolution_data:

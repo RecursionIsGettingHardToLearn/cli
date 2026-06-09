@@ -5,7 +5,7 @@ import { SupabaseService } from '../auth/supabase.service';
 import { environment } from '../../../environments/environment';
 
 /**
- * Cliente REST para MS2 (ms-diagnosticos). MS2 NO se federa en el gateway:
+ * Cliente REST para MS2 (ms-diagnostico-ia). MS2 NO se federa en el gateway:
  * el frontend lo llama directo por REST. Cada request adjunta el JWT de Supabase.
  */
 @Injectable({ providedIn: 'root' })
@@ -28,47 +28,28 @@ export class Ms2Service {
   // --- Pre-triaje (NLP) ---
   preTriaje(sintomas: string): Observable<any> {
     return this.withAuth(headers =>
-      this.http.post(`${this.base}/api/pre-triaje`, { sintomas }, { headers }));
+      this.http.post(`${this.base}/api/chat-triaje`, { mensaje: sintomas }, { headers }));
   }
 
   // --- Diagnóstico IA ---
   diagnosticar(form: FormData): Observable<any> {
     return this.withAuth(headers =>
-      this.http.post(`${this.base}/api/diagnosticar`, form, { headers }));
+      this.http.post(`${this.base}/api/analizar-imagen`, form, { headers }));
   }
 
   listarDiagnosticos(pacienteId: string): Observable<any> {
     return this.withAuth(headers =>
-      this.http.get(`${this.base}/api/diagnosticos`, { headers, params: { paciente_id: pacienteId } }));
+      this.http.get(`${this.base}/api/resultados/paciente/${pacienteId}`, { headers }));
   }
 
-  // --- Documentos (gestión documental versionada) ---
+  // --- Documentos (gestion documental basica) ---
   subirDocumento(form: FormData): Observable<any> {
     return this.withAuth(headers =>
-      this.http.post(`${this.base}/api/documentos/subir`, form, { headers }));
+      this.http.post(`${this.base}/api/documentos`, form, { headers }));
   }
 
   listarDocumentos(pacienteId: string): Observable<any> {
     return this.withAuth(headers =>
       this.http.get(`${this.base}/api/documentos`, { headers, params: { paciente_id: pacienteId } }));
-  }
-
-  versiones(documentoId: string): Observable<any> {
-    return this.withAuth(headers =>
-      this.http.get(`${this.base}/api/documentos/${documentoId}/versiones`, { headers }));
-  }
-
-  auditoria(documentoId: string): Observable<any> {
-    return this.withAuth(headers =>
-      this.http.get(`${this.base}/api/auditoria`, { headers, params: { documento_id: documentoId } }));
-  }
-
-  descargar(documentoId: string, version?: string): Observable<Blob> {
-    return this.withAuth(headers =>
-      this.http.get(`${this.base}/api/documentos/${documentoId}/descargar`, {
-        headers,
-        responseType: 'blob',
-        params: version ? { version } : {},
-      }));
   }
 }

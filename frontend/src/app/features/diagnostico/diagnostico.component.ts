@@ -97,13 +97,47 @@ export class DiagnosticoComponent implements OnInit {
   }
 
   analizar() {
-    alert('Próximamente: Función de Inteligencia Artificial por desarrollar.');
+    if (!this.file || !this.pacienteId) return;
+    this.cargando = true;
+    this.error = '';
+    this.resultado = null;
+
+    const fd = new FormData();
+    fd.append('file', this.file);
+    fd.append('paciente_id', this.pacienteId);
+    fd.append('descripcion', `${this.tipoEstudio} · modo ${this.modo}`);
+
+    this.ms2.diagnosticar(fd).subscribe({
+      next: r => {
+        this.cargando = false;
+        this.resultado = {
+          hallazgo: r.hallazgos?.join(' · ') || r.recomendacion,
+          confianza: r.confianza ?? 0,
+          modo: r.proveedor,
+          modelo_version: r.tipo_imagen,
+        };
+        this.cargarDiag();
+      },
+      error: e => {
+        this.cargando = false;
+        this.error = e?.error?.detail || e.message || 'Error al analizar la imagen';
+      }
+    });
   }
 
   cargarDiag() {
     if (!this.pacienteId) { this.diagnosticos = []; return; }
     this.ms2.listarDiagnosticos(this.pacienteId).subscribe({
-      next: r => this.diagnosticos = r ?? [], error: () => this.diagnosticos = []
+      next: r => this.diagnosticos = (r ?? [])
+        .filter((x: any) => x.tipo === 'analisis_imagen')
+        .map((x: any) => ({
+          created_at: x.creado_en,
+          tipo_estudio: x.resultado?.tipo_imagen ?? 'imagen',
+          hallazgo: x.resultado?.hallazgos?.join(' · ') ?? x.resultado?.recomendacion ?? 'sin hallazgos',
+          confianza: x.resultado?.confianza ?? 0,
+          modo: x.proveedor,
+        })),
+      error: () => this.diagnosticos = []
     });
   }
 }

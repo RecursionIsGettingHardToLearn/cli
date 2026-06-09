@@ -71,3 +71,11 @@ yarn-error.log*
 pnpm-debug.log*
 *.tmp
 *.temp
+
+# -------------------------------------------------------
+# 🐍 Python / MS2 IA
+# -------------------------------------------------------
+**/.venv/
+**/__pycache__/
+**/*.pyc
+ms-diagnostico-ia/data/
