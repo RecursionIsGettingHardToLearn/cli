@@ -1,0 +1,87 @@
+{
+  "name": "Recordatorios de citas (push 24h)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a1111111-1111-4111-8111-111111111111",
+      "name": "Schedule 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [260, 300],
+      "notes": "Cron diario 08:00. Timezone configurado en Settings del workflow."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REEMPLAZAR_SUPABASE_URL/auth/v1/token?grant_type=password",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "REEMPLAZAR_SUPABASE_ANON_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"email\": \"admin@clinica.com\",\n  \"password\": \"REEMPLAZAR_PASSWORD\"\n}",
+        "options": {}
+      },
+      "id": "b2222222-2222-4222-8222-222222222222",
+      "name": "Login Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "notes": "Login del admin. Reemplaza SUPABASE_URL, ANON_KEY y PASSWORD."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:3000/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"mutation{ enviarRecordatorios }\"\n}",
+        "options": {}
+      },
+      "id": "c3333333-3333-4333-8333-333333333333",
+      "name": "Enviar recordatorios push",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 300],
+      "notes": "Llama la mutation enviarRecordatorios. URL interna Docker: http://backend:3000"
+    }
+  ],
+  "connections": {
+    "Schedule 08:00": {
+      "main": [[{ "node": "Login Supabase", "type": "main", "index": 0 }]]
+    },
+    "Login Supabase": {
+      "main": [[{ "node": "Enviar recordatorios push", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/La_Paz"
+  },
+  "pinData": {}
+}

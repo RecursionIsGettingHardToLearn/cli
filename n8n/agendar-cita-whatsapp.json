@@ -1,0 +1,132 @@
+{
+  "name": "Reservas por WhatsApp (Evolution API)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolution-whatsapp-webhook",
+        "options": {}
+      },
+      "id": "11111111-1111-1111-1111-111111111111",
+      "name": "Recibir Mensaje WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [200, 300],
+      "webhookId": "evolution-whatsapp-webhook",
+      "notes": "Configura la URL de este Webhook en Evolution API para que mande aquí los mensajes entrantes."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.data.message.conversation }}",
+              "operation": "contains",
+              "value2": "agendar cita"
+            }
+          ]
+        }
+      },
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Verificar texto",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1.0,
+      "position": [450, 300],
+      "notes": "Verifica si el paciente escribió 'agendar cita'."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:3000/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"mutation { crearCita(input: { pacienteId: \\\"1\\\", fechaHora: \\\"2026-06-15T10:00:00Z\\\", especialidad: \\\"Medicina General\\\" }) { id } }\"\n}",
+        "options": {}
+      },
+      "id": "33333333-3333-3333-3333-333333333333",
+      "name": "Crear Cita (GraphQL)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [700, 200],
+      "notes": "Llama a tu Next.js BFF para guardar la cita en la base de datos."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://evolution:8080/message/sendText/clinica",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "clinica_evolution_key_2025"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"number\": \"={{ $node['Recibir Mensaje WhatsApp'].json.body.data.remoteJid }}\",\n  \"options\": {\n    \"delay\": 1200,\n    \"presence\": \"composing\"\n  },\n  \"textMessage\": {\n    \"text\": \"¡Listo! Tu cita ha sido agendada con éxito en el sistema de la clínica. ✅\"\n  }\n}",
+        "options": {}
+      },
+      "id": "44444444-4444-4444-4444-444444444444",
+      "name": "Responder por WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [950, 200],
+      "notes": "Usa Evolution API para contestarle al paciente a su mismo número."
+    }
+  ],
+  "connections": {
+    "Recibir Mensaje WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Verificar texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar texto": {
+      "main": [
+        [
+          {
+            "node": "Crear Cita (GraphQL)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Cita (GraphQL)": {
+      "main": [
+        [
+          {
+            "node": "Responder por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
