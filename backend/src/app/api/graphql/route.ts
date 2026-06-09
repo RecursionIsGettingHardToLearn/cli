@@ -16,7 +16,9 @@ const ms3Executor = buildHTTPExecutor({
   endpoint: MS3_URL,
   headers: (executorRequest: any) => {
     const auth = executorRequest?.context?.authorization;
-    return auth ? { authorization: auth } : {};
+    const h: Record<string, string> = {};
+    if (auth) h['authorization'] = auth;
+    return h;
   },
 });
 
