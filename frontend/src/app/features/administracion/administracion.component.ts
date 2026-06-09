@@ -146,6 +146,33 @@ interface UsuarioRow { id: string; nombre: string; email: string; rol: Rol; acti
               <option *ngFor="let r of ROLES" [value]="r">{{ r }}</option>
             </select>
           </label>
+
+          <!-- Datos clinicos extra: solo cuando el rol es PACIENTE.
+               El CI y el apellido son obligatorios; el CI es lo que buscan
+               las automatizaciones (n8n) para contactar al paciente. -->
+          <ng-container *ngIf="createForm.rol === 'PACIENTE'">
+            <label>
+              <span>CI (cédula de identidad)</span>
+              <input type="text" [(ngModel)]="createForm.ci" name="cCi"
+                     required maxlength="20" autocomplete="off">
+            </label>
+            <label>
+              <span>Apellido</span>
+              <input type="text" [(ngModel)]="createForm.apellido" name="cApellido"
+                     required maxlength="150" autocomplete="off">
+            </label>
+            <label>
+              <span>Teléfono <small class="hint-opt">(opcional)</small></span>
+              <input type="text" [(ngModel)]="createForm.telefono" name="cTelefono"
+                     maxlength="30" autocomplete="off">
+            </label>
+            <label>
+              <span>Fecha de nacimiento <small class="hint-opt">(opcional)</small></span>
+              <input type="date" [(ngModel)]="createForm.fechaNacimiento" name="cFechaNac">
+            </label>
+            <small class="hint-warn">Se crea la cuenta de login Y la ficha de paciente (con su CI y correo) en un solo paso.</small>
+          </ng-container>
+
           <div *ngIf="createErrorMsg" class="error-banner">{{ createErrorMsg }}</div>
           <div class="form-actions">
             <button type="button" class="btn-secondary" (click)="cancelCrear()">Cancelar</button>
@@ -291,6 +318,7 @@ interface UsuarioRow { id: string; nombre: string; email: string; rol: Rol; acti
       box-shadow: 0 0 0 2px rgba(15,110,86,0.15);
     }
     .hint-warn { font-size: 11px; color: #92400e; font-weight: 400; }
+    .hint-opt { font-size: 11px; color: #9ca3af; font-weight: 400; text-transform: none; }
     .form-actions {
       display: flex;
       justify-content: flex-end;
@@ -331,8 +359,10 @@ export class AdministracionComponent implements OnInit {
   editErrorMsg = '';
 
   creating = false;
-  createForm: { nombre: string; email: string; password: string; rol: Rol } =
-    { nombre: '', email: '', password: '', rol: 'MEDICO' };
+  createForm: {
+    nombre: string; email: string; password: string; rol: Rol;
+    ci: string; apellido: string; telefono: string; fechaNacimiento: string;
+  } = { nombre: '', email: '', password: '', rol: 'MEDICO', ci: '', apellido: '', telefono: '', fechaNacimiento: '' };
   savingCreate = false;
   createErrorMsg = '';
 
@@ -387,7 +417,7 @@ export class AdministracionComponent implements OnInit {
 
   openCrear() {
     this.creating = true;
-    this.createForm = { nombre: '', email: '', password: '', rol: 'MEDICO' };
+    this.createForm = { nombre: '', email: '', password: '', rol: 'MEDICO', ci: '', apellido: '', telefono: '', fechaNacimiento: '' };
     this.createErrorMsg = '';
   }
 
@@ -405,10 +435,27 @@ export class AdministracionComponent implements OnInit {
       this.createErrorMsg = 'Nombre, email y contraseña (mínimo 6 caracteres) son obligatorios';
       return;
     }
+    const esPaciente = this.createForm.rol === 'PACIENTE';
+    const ci = this.createForm.ci?.trim();
+    const apellido = this.createForm.apellido?.trim();
+    const telefono = this.createForm.telefono?.trim();
+    const fechaNacimiento = this.createForm.fechaNacimiento?.trim();
+    if (esPaciente && (!ci || !apellido)) {
+      this.createErrorMsg = 'Para un paciente, el CI y el apellido son obligatorios';
+      return;
+    }
     this.savingCreate = true;
     this.apollo.mutate<any>({
       mutation: CREAR_USUARIO,
-      variables: { nombre, email, password, rol: this.createForm.rol }
+      variables: {
+        nombre, email, password, rol: this.createForm.rol,
+        // Solo para pacientes; para otros roles el backend los ignora.
+        ci: esPaciente ? ci : null,
+        apellido: esPaciente ? apellido : null,
+        telefono: esPaciente && telefono ? telefono : null,
+        // <input type="date"> da 'YYYY-MM-DD'; lo mandamos como ISO para el scalar DateTime.
+        fechaNacimiento: esPaciente && fechaNacimiento ? new Date(fechaNacimiento).toISOString() : null,
+      }
     }).subscribe({
       next: () => { this.savingCreate = false; this.creating = false; this.fetchUsuarios(); },
       error: e => { this.savingCreate = false; this.createErrorMsg = this.parseError(e); }
