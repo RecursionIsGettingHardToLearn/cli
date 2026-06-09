@@ -50,7 +50,8 @@ public class BlockchainClient {
                     .header("Content-Type", "application/json");
             if (token != null) spec = (WebClient.RequestBodySpec) spec.header("Authorization", "Bearer " + token);
 
-            Map response = spec.bodyValue(body).retrieve().bodyToMono(Map.class)
+            Map<String, Object> response = spec.bodyValue(body).retrieve()
+                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(timeout)
                     .onErrorResume(e -> { log.warn("Llamada blockchain fallo: {}", e.getMessage()); return Mono.empty(); })
                     .block();
@@ -70,7 +71,7 @@ public class BlockchainClient {
         if (!enabled) return Map.of("exists", false);
         try {
             return webClient.get().uri(uriBuilder -> uriBuilder.path("/recetas/verificar").queryParam("hash", hash).build())
-                    .retrieve().bodyToMono(Map.class)
+                    .retrieve().bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(timeout)
                     .block();
         } catch (Exception e) {
