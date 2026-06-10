@@ -17,20 +17,43 @@ export function HomeScreen({ navigation }: any) {
 
       {user?.rol === 'PACIENTE' && (
         <>
+          <Tile label="Mis citas" onPress={() => navigation.navigate('Citas')} />
           <Tile label="Mis recetas" onPress={() => navigation.navigate('MisRecetas')} />
           <Tile label="Mis facturas" onPress={() => navigation.navigate('MisFacturas')} />
+          <Tile label="Asistente IA (pre-triaje)" onPress={() => navigation.navigate('ChatTriaje')} />
         </>
       )}
 
       {user?.rol === 'MEDICO' && (
         <>
+          <Tile label="Agenda de citas" onPress={() => navigation.navigate('Citas')} />
+          <Tile label="Diagnostico (nuevo episodio)" onPress={() => navigation.navigate('Diagnostico')} />
+          <Tile label="Historia clinica" onPress={() => navigation.navigate('Historia')} />
           <Tile label="Mis recetas emitidas" onPress={() => navigation.navigate('MisRecetas')} />
           <Tile label="Verificar receta en blockchain" onPress={() => navigation.navigate('Verificador')} />
         </>
       )}
 
-      {(user?.rol === 'FARMACEUTICO' || user?.rol === 'ADMINISTRADOR') && (
-        <Tile label="Verificar receta en blockchain" onPress={() => navigation.navigate('Verificador')} />
+      {user?.rol === 'FARMACEUTICO' && (
+        <>
+          <Tile label="Caja (nueva venta)" onPress={() => navigation.navigate('Caja')} />
+          <Tile label="Recepcion de pacientes" onPress={() => navigation.navigate('Recepcion')} />
+          <Tile label="Inventario" onPress={() => navigation.navigate('Inventario')} />
+          <Tile label="Facturas" onPress={() => navigation.navigate('Facturas')} />
+          <Tile label="Verificar receta en blockchain" onPress={() => navigation.navigate('Verificador')} />
+        </>
+      )}
+
+      {user?.rol === 'ADMINISTRADOR' && (
+        <>
+          <Tile label="Citas" onPress={() => navigation.navigate('Citas')} />
+          <Tile label="Recepcion de pacientes" onPress={() => navigation.navigate('Recepcion')} />
+          <Tile label="Caja (nueva venta)" onPress={() => navigation.navigate('Caja')} />
+          <Tile label="Inventario" onPress={() => navigation.navigate('Inventario')} />
+          <Tile label="Facturas" onPress={() => navigation.navigate('Facturas')} />
+          <Tile label="Administracion de usuarios" onPress={() => navigation.navigate('Administracion')} />
+          <Tile label="Dashboard BI" onPress={() => navigation.navigate('DashboardBi')} />
+        </>
       )}
 
       <Tile label="Recursos del telefono (camara, GPS, biometria, push)" onPress={() => navigation.navigate('RecursosNativos')} />
