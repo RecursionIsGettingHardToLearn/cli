@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery, useMutation } from '@apollo/client';
+import { usePaginacion, PiePaginacion } from '../ui/paginacion';
 import {
   PACIENTES,
   CREAR_PACIENTE,
@@ -39,9 +40,6 @@ export function RecepcionScreen() {
   const [editing, setEditing] = useState<Paciente | null>(null);
   const [creating, setCreating] = useState(false);
 
-  if (loading && !data) return <Loading />;
-  if (error && !data) return <ErrorState message={error.message} />;
-
   const pacientes: Paciente[] = data?.pacientes ?? [];
   const filtrados = q.trim()
     ? pacientes.filter(
@@ -50,6 +48,11 @@ export function RecepcionScreen() {
           p.ci.includes(q.trim())
       )
     : pacientes;
+  const pag = usePaginacion(filtrados, 15);
+
+  if (loading && !data) return <Loading />;
+  if (error && !data) return <ErrorState message={error.message} />;
+
 
   if (creating) {
     return (
@@ -83,7 +86,10 @@ export function RecepcionScreen() {
   return (
     <Screen scroll={false}>
       <FlatList
-        data={filtrados}
+        data={pag.items}
+        onEndReached={pag.cargarMas}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={<PiePaginacion {...pag.pie} />}
         keyExtractor={(p) => p.id}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
         ListHeaderComponent={

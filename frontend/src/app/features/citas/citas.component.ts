@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Apollo } from 'apollo-angular';
+import { PaginadorComponent, paginar } from '../../shared/paginador/paginador.component';
 import { take } from 'rxjs';
 import { MIS_CITAS, CITAS, CREAR_CITA, CANCELAR_CITA, LIST_PACIENTES } from '../../core/graphql/queries';
 import { SupabaseService } from '../../core/auth/supabase.service';
@@ -10,7 +11,7 @@ import { SupabaseService } from '../../core/auth/supabase.service';
 @Component({
   selector: 'app-citas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginadorComponent],
   template: `
     <h1 class="page-title">Citas</h1>
 
@@ -49,7 +50,7 @@ import { SupabaseService } from '../../core/auth/supabase.service';
 
     <div class="card">
       <h3>{{ esPaciente ? 'Mis citas' : 'Citas agendadas' }}</h3>
-      <div *ngFor="let c of citas" class="cita-card">
+      <div *ngFor="let c of citasPagina" class="cita-card">
         <div style="display:flex; justify-content:space-between;">
           <div>
             <strong *ngIf="!esPaciente && c.paciente">{{ c.paciente.nombre }} {{ c.paciente.apellido }}</strong>
@@ -66,6 +67,10 @@ import { SupabaseService } from '../../core/auth/supabase.service';
         <p *ngIf="c.motivo" class="meta">{{ c.motivo }}</p>
       </div>
       <p *ngIf="citas.length === 0" class="empty">No hay citas.</p>
+
+      <app-paginador [total]="citas.length" [pagina]="pagina" [porPagina]="porPagina"
+                     (paginaChange)="pagina = $event"
+                     (porPaginaChange)="porPagina = $event"></app-paginador>
     </div>
   `,
   styles: [`
@@ -91,6 +96,10 @@ export class CitasComponent implements OnInit {
   esPaciente = false;
   puedeCrear = false;
   citas: any[] = [];
+  pagina = 1;
+  porPagina = 10;
+
+  get citasPagina() { return paginar(this.citas, this.pagina, this.porPagina); }
   pacientes: any[] = [];
   showForm = false;
   guardando = false;
@@ -117,7 +126,7 @@ export class CitasComponent implements OnInit {
   cargar() {
     const q = this.esPaciente ? MIS_CITAS : CITAS;
     this.apollo.query<any>({ query: q, fetchPolicy: 'network-only' }).subscribe({
-      next: r => this.citas = r.data?.misCitas ?? r.data?.citas ?? [],
+      next: r => { this.citas = r.data?.misCitas ?? r.data?.citas ?? []; this.pagina = 1; },
       error: () => this.citas = []
     });
   }

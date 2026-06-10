@@ -5,12 +5,16 @@ import { useAuth } from '../auth/AuthContext';
 import { MIS_RECETAS_PACIENTE, MIS_RECETAS_MEDICO } from '../graphql/queries';
 import { verificarHashOnChain, type ResultadoOnChain, addressUrl } from '../services/onchain';
 import { blockchainReady } from '../config/blockchain';
+import { usePaginacion, PiePaginacion } from '../ui/paginacion';
 
 export function MisRecetasScreen() {
   const { user } = useAuth();
   const esPaciente = user?.rol === 'PACIENTE';
   const query = esPaciente ? MIS_RECETAS_PACIENTE : MIS_RECETAS_MEDICO;
   const { data, loading, error, refetch } = useQuery<any>(query, { fetchPolicy: 'cache-and-network' });
+
+  const recetas: any[] = esPaciente ? data?.misRecetasPaciente ?? [] : data?.misRecetas ?? [];
+  const pag = usePaginacion(recetas, 15);
 
   if (loading && !data) {
     return (
@@ -28,11 +32,13 @@ export function MisRecetasScreen() {
     );
   }
 
-  const recetas: any[] = esPaciente ? data?.misRecetasPaciente ?? [] : data?.misRecetas ?? [];
 
   return (
     <FlatList
-      data={recetas}
+      data={pag.items}
+        onEndReached={pag.cargarMas}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={<PiePaginacion {...pag.pie} />}
       keyExtractor={r => r.id}
       contentContainerStyle={{ padding: 12 }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => refetch()} tintColor="#0f6e56" />}

@@ -26,6 +26,7 @@ import {
   fmtFechaHora,
 } from '../ui/kit';
 import { PacienteSearch, type PacienteLite } from '../components/PacienteSearch';
+import { usePaginacion, PiePaginacion } from '../ui/paginacion';
 
 const URGENCIAS = ['BAJA', 'MEDIA', 'ALTA'] as const;
 
@@ -51,18 +52,23 @@ export function CitasScreen() {
 
   const [showForm, setShowForm] = useState(false);
 
-  if (loading && !data) return <Loading />;
-  if (error && !data) return <ErrorState message={error.message} />;
-
   const todas: any[] = (esAdmin || esMedico ? data?.citas : data?.misCitas) ?? [];
   const citas: any[] = esMedico
     ? todas.filter(c => c.medicoUid === session?.user?.id)
     : todas;
+  const pag = usePaginacion(citas, 15);
+
+  if (loading && !data) return <Loading />;
+  if (error && !data) return <ErrorState message={error.message} />;
+
 
   return (
     <Screen scroll={false}>
       <FlatList
-        data={citas}
+        data={pag.items}
+        onEndReached={pag.cargarMas}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={<PiePaginacion {...pag.pie} />}
         keyExtractor={(c) => c.id}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
         ListHeaderComponent={

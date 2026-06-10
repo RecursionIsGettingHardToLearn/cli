@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useQuery, useMutation } from '@apollo/client';
+import { usePaginacion, PiePaginacion } from '../ui/paginacion';
 import {
   USUARIOS,
   CREAR_USUARIO,
@@ -42,10 +43,12 @@ export function AdministracionScreen() {
   });
   const [creating, setCreating] = useState(false);
 
+  const usuarios: Usuario[] = data?.usuarios ?? [];
+  const pag = usePaginacion(usuarios, 15);
+
   if (loading && !data) return <Loading />;
   if (error && !data) return <ErrorState message={error.message} />;
 
-  const usuarios: Usuario[] = data?.usuarios ?? [];
 
   if (creating) {
     return (
@@ -64,7 +67,10 @@ export function AdministracionScreen() {
   return (
     <Screen scroll={false}>
       <FlatList
-        data={usuarios}
+        data={pag.items}
+        onEndReached={pag.cargarMas}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={<PiePaginacion {...pag.pie} />}
         keyExtractor={(u) => u.id}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
         ListHeaderComponent={

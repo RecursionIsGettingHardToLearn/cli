@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useQuery, useMutation, useLazyQuery } from '@apollo/client';
+import { usePaginacion, PiePaginacion } from '../ui/paginacion';
 import {
   MEDICAMENTOS,
   CATEGORIAS,
@@ -46,13 +47,15 @@ export function InventarioScreen() {
   });
   const [creating, setCreating] = useState(false);
 
-  if (loading && !data) return <Loading />;
-  if (error && !data) return <ErrorState message={error.message} />;
-
   const meds: Medicamento[] = data?.medicamentos ?? [];
   const filtrados = q.trim()
     ? meds.filter((m) => m.nombre.toLowerCase().includes(q.toLowerCase()))
     : meds;
+  const pag = usePaginacion(filtrados, 15);
+
+  if (loading && !data) return <Loading />;
+  if (error && !data) return <ErrorState message={error.message} />;
+
 
   if (creating) {
     return (
@@ -71,7 +74,10 @@ export function InventarioScreen() {
   return (
     <Screen scroll={false}>
       <FlatList
-        data={filtrados}
+        data={pag.items}
+        onEndReached={pag.cargarMas}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={<PiePaginacion {...pag.pie} />}
         keyExtractor={(m) => m.id}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
         ListHeaderComponent={

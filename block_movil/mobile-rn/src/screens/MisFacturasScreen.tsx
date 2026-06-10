@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, RefreshControl, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useQuery, useMutation } from '@apollo/client';
 import { MIS_FACTURAS_PACIENTE, CREAR_CHECKOUT_FACTURA } from '../graphql/queries';
+import { usePaginacion, PiePaginacion } from '../ui/paginacion';
 
 export function MisFacturasScreen() {
   const { data, loading, error, refetch } = useQuery<any>(MIS_FACTURAS_PACIENTE, {
@@ -29,6 +30,9 @@ export function MisFacturasScreen() {
     }
   };
 
+  const facturas: any[] = data?.misFacturas ?? [];
+  const pag = usePaginacion(facturas, 15);
+
   if (loading && !data) {
     return (
       <View style={styles.center}>
@@ -45,11 +49,13 @@ export function MisFacturasScreen() {
     );
   }
 
-  const facturas: any[] = data?.misFacturas ?? [];
 
   return (
     <FlatList
-      data={facturas}
+      data={pag.items}
+        onEndReached={pag.cargarMas}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={<PiePaginacion {...pag.pie} />}
       keyExtractor={f => f.id}
       contentContainerStyle={{ padding: 12 }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => refetch()} tintColor="#0f6e56" />}

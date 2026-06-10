@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
 import { useQuery, useMutation } from '@apollo/client';
 import { FACTURAS, ANULAR_FACTURA, CREAR_CHECKOUT_FACTURA } from '../graphql/queries';
+import { usePaginacion, PiePaginacion } from '../ui/paginacion';
 import {
   Screen,
   Card,
@@ -26,15 +27,20 @@ export function FacturasScreen() {
     fetchPolicy: 'cache-and-network',
   });
 
+  const facturas: any[] = data?.facturas ?? [];
+  const pag = usePaginacion(facturas, 15);
+
   if (loading && !data) return <Loading />;
   if (error && !data) return <ErrorState message={error.message} />;
 
-  const facturas: any[] = data?.facturas ?? [];
 
   return (
     <Screen scroll={false}>
       <FlatList
-        data={facturas}
+        data={pag.items}
+        onEndReached={pag.cargarMas}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={<PiePaginacion {...pag.pie} />}
         keyExtractor={(f) => f.id}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
         ListHeaderComponent={<SectionTitle>Facturas ({facturas.length})</SectionTitle>}
