@@ -8,7 +8,7 @@
 export const environment = {
   production: true,
   graphqlUrl: 'https://rr-rho-jade.vercel.app/api/graphql',
-  ms2Url: 'http://localhost:8000',
+  ms2Url: 'https://ms-diagnostico-ia.onrender.com',
   blockchainUrl: 'https://rr-ch3a.onrender.com',
   supabase: {
     url: 'https://yiyfwfvxdseamnelgetf.supabase.co',
