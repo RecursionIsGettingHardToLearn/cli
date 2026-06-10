@@ -44,6 +44,15 @@ class ImagenAnalisisResponse(BaseModel):
     estado_revision: str = "PENDIENTE"
 
 
+class ReporteIaResponse(BaseModel):
+    transcripcion: str = ""
+    titulo: str
+    narrativa: str
+    fuente: str | None = None
+    columnas: list[str] = []
+    proveedor: str
+
+
 class ResultadoResponse(BaseModel):
     id: int
     paciente_id: str | None

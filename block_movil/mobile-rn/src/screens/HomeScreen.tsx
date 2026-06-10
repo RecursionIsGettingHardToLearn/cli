@@ -20,6 +20,7 @@ export function HomeScreen({ navigation }: any) {
           <Tile label="Mis citas" onPress={() => navigation.navigate('Citas')} />
           <Tile label="Mis recetas" onPress={() => navigation.navigate('MisRecetas')} />
           <Tile label="Mis facturas" onPress={() => navigation.navigate('MisFacturas')} />
+          <Tile label="Reportes" onPress={() => navigation.navigate('Reportes')} />
           <Tile label="Asistente IA (pre-triaje)" onPress={() => navigation.navigate('ChatTriaje')} />
         </>
       )}
@@ -30,6 +31,7 @@ export function HomeScreen({ navigation }: any) {
           <Tile label="Diagnostico (nuevo episodio)" onPress={() => navigation.navigate('Diagnostico')} />
           <Tile label="Historia clinica" onPress={() => navigation.navigate('Historia')} />
           <Tile label="Mis recetas emitidas" onPress={() => navigation.navigate('MisRecetas')} />
+          <Tile label="Reportes" onPress={() => navigation.navigate('Reportes')} />
           <Tile label="Verificar receta en blockchain" onPress={() => navigation.navigate('Verificador')} />
         </>
       )}
@@ -40,6 +42,7 @@ export function HomeScreen({ navigation }: any) {
           <Tile label="Recepcion de pacientes" onPress={() => navigation.navigate('Recepcion')} />
           <Tile label="Inventario" onPress={() => navigation.navigate('Inventario')} />
           <Tile label="Facturas" onPress={() => navigation.navigate('Facturas')} />
+          <Tile label="Reportes" onPress={() => navigation.navigate('Reportes')} />
           <Tile label="Verificar receta en blockchain" onPress={() => navigation.navigate('Verificador')} />
         </>
       )}
@@ -53,6 +56,7 @@ export function HomeScreen({ navigation }: any) {
           <Tile label="Facturas" onPress={() => navigation.navigate('Facturas')} />
           <Tile label="Administracion de usuarios" onPress={() => navigation.navigate('Administracion')} />
           <Tile label="Dashboard BI" onPress={() => navigation.navigate('DashboardBi')} />
+          <Tile label="Reportes" onPress={() => navigation.navigate('Reportes')} />
         </>
       )}
 

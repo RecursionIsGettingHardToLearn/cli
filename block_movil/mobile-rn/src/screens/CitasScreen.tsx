@@ -42,8 +42,9 @@ export function CitasScreen() {
   const esMedico = rol === 'MEDICO';
   const puedeCrear = esAdmin || esMedico;
 
-  // ADMIN ve todas las citas; medico/paciente ven las suyas.
-  const listQuery = esAdmin ? CITAS : MIS_CITAS;
+  // ADMIN ve todas las citas; MEDICO ve su agenda (citas donde el es el medico);
+  // PACIENTE ve las suyas via misCitas.
+  const listQuery = esAdmin || esMedico ? CITAS : MIS_CITAS;
   const { data, loading, error, refetch } = useQuery<any>(listQuery, {
     fetchPolicy: 'cache-and-network',
   });
@@ -53,7 +54,10 @@ export function CitasScreen() {
   if (loading && !data) return <Loading />;
   if (error && !data) return <ErrorState message={error.message} />;
 
-  const citas: any[] = (esAdmin ? data?.citas : data?.misCitas) ?? [];
+  const todas: any[] = (esAdmin || esMedico ? data?.citas : data?.misCitas) ?? [];
+  const citas: any[] = esMedico
+    ? todas.filter(c => c.medicoUid === session?.user?.id)
+    : todas;
 
   return (
     <Screen scroll={false}>
@@ -80,7 +84,7 @@ export function CitasScreen() {
               />
             )}
             <SectionTitle>
-              {esAdmin ? 'Todas las citas' : 'Mis citas'} ({citas.length})
+              {esAdmin ? 'Todas las citas' : esMedico ? 'Mi agenda' : 'Mis citas'} ({citas.length})
             </SectionTitle>
           </View>
         }

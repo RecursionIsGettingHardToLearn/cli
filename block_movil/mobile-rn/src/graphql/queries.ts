@@ -293,3 +293,21 @@ export const BI_RECETAS_BLOCKCHAIN = gql`
     }
   }
 `;
+
+// ============================================================================
+//  REPORTES (estaticos + dinamicos) — disponibles para los 4 roles.
+//  Reutiliza las fuentes ya existentes; estas son consultas adicionales que
+//  el modulo de reportes necesita y que no estaban declaradas arriba.
+// ============================================================================
+
+// Recetas de un paciente concreto (ADMIN / MEDICO / FARMACEUTICO) — fuente de
+// reportes de recetas cuando se parte de la ficha de un paciente.
+export const RECETAS_POR_PACIENTE = gql`
+  query RecetasPorPaciente($pacienteId: UUID!) {
+    recetasPorPaciente(pacienteId: $pacienteId) {
+      id fechaEmision estado controlado medicoNombre diagnostico
+      paciente { id nombre apellido }
+      detalles { medicamento { nombre } cantidad posologia }
+    }
+  }
+`;

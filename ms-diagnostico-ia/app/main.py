@@ -1,6 +1,7 @@
 import json
 
 from datetime import datetime
+from pathlib import Path
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -14,10 +15,12 @@ from app.schemas import (
     DocumentoResponse,
     ImagenAnalisisResponse,
     IndicadoresIaResponse,
+    ReporteIaResponse,
     RevisionResultadoRequest,
     ResultadoResponse,
 )
 from app.services.gemini import gemini_image_analysis, gemini_triage
+from app.services.openai_reportes import generar_plan_reporte, transcribir_audio
 from app.services.rules import fallback_image_analysis, rule_based_triage
 from app.services.storage import save_result, save_upload
 
@@ -78,6 +81,7 @@ def health(settings: Settings = Depends(get_settings)) -> dict:
         "service": settings.app_name,
         "environment": settings.environment,
         "gemini": "configured" if settings.gemini_api_key else "fallback",
+        "openai": "configured" if settings.openai_api_key else "fallback",
     }
 
 
@@ -105,6 +109,80 @@ async def chat_triaje(
         estado_revision="NO_APLICA",
     )
     return result
+
+
+@app.post("/api/reporte-ia", response_model=ReporteIaResponse)
+async def reporte_ia(
+    audio: UploadFile | None = File(None),
+    consulta: str | None = Form(None),
+    catalogo: str = Form("[]"),
+    rol: str = Form(""),
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> ReporteIaResponse:
+    """Reporte con IA por voz.
+
+    Recibe audio (multipart) o una consulta de texto + el catalogo de fuentes
+    que el rol puede ver. Transcribe con Whisper (si hay audio) y pide a OpenAI
+    un plan de reporte (fuente + columnas + analisis). El movil ejecuta luego la
+    consulta real contra el gateway GraphQL. La IA nunca recibe datos de
+    pacientes, solo el catalogo de columnas y la consulta.
+    """
+    try:
+        catalogo_data = json.loads(catalogo) if catalogo else []
+        if not isinstance(catalogo_data, list):
+            catalogo_data = []
+    except json.JSONDecodeError:
+        catalogo_data = []
+
+    transcripcion = (consulta or "").strip()
+
+    if audio is not None:
+        import os
+        import tempfile
+
+        suffix = os.path.splitext(audio.filename or "")[1] or ".m4a"
+        contenido = await audio.read()
+        tmp = tempfile.NamedTemporaryFile(
+            delete=False, suffix=suffix, dir=str(settings.upload_path)
+        )
+        try:
+            tmp.write(contenido)
+            tmp.flush()
+            tmp.close()
+            texto = await transcribir_audio(settings, Path(tmp.name))
+            if texto:
+                transcripcion = texto
+        finally:
+            try:
+                os.unlink(tmp.name)
+            except OSError:
+                pass
+
+    plan = await generar_plan_reporte(settings, transcripcion, catalogo_data, rol)
+
+    # Auditoria best-effort: no rompe la respuesta si la persistencia falla.
+    try:
+        save_result(
+            db,
+            tipo="reporte_ia",
+            proveedor=str(plan.get("proveedor", "desconocido")),
+            paciente_id=None,
+            entrada_resumen=transcripcion[:500],
+            resultado=plan,
+            estado_revision="NO_APLICA",
+        )
+    except Exception:
+        pass
+
+    return ReporteIaResponse(
+        transcripcion=transcripcion,
+        titulo=str(plan.get("titulo", "Reporte con IA")),
+        narrativa=str(plan.get("narrativa", "")),
+        fuente=plan.get("fuente"),
+        columnas=list(plan.get("columnas", [])),
+        proveedor=str(plan.get("proveedor", "desconocido")),
+    )
 
 
 @app.post("/api/documentos", response_model=DocumentoResponse)

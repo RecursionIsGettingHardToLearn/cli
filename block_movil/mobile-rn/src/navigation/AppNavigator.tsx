@@ -20,6 +20,7 @@ import { FacturasScreen } from '../screens/FacturasScreen';
 import { InventarioScreen } from '../screens/InventarioScreen';
 import { AdministracionScreen } from '../screens/AdministracionScreen';
 import { DashboardBiScreen } from '../screens/DashboardBiScreen';
+import { ReportesScreen } from '../screens/ReportesScreen';
 import type { RolUsuario } from '../config/supabase';
 
 const Stack = createNativeStackNavigator();
@@ -45,6 +46,7 @@ const MENU: MenuItem[] = [
   { name: 'Inventario', label: 'Inventario', component: InventarioScreen, roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
   { name: 'Administracion', label: 'Administracion', component: AdministracionScreen, roles: ['ADMINISTRADOR'] },
   { name: 'DashboardBi', label: 'Dashboard BI', component: DashboardBiScreen, roles: ['ADMINISTRADOR'] },
+  { name: 'Reportes', label: 'Reportes', component: ReportesScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] },
   { name: 'ChatTriaje', label: 'Asistente IA', component: ChatTriajeScreen, roles: ['PACIENTE', 'ADMINISTRADOR', 'MEDICO'] },
   { name: 'Verificador', label: 'Verificar receta', component: VerificadorRecetaScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO'] },
   { name: 'RecursosNativos', label: 'Recursos del telefono', component: RecursosNativosScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] },
