@@ -10,8 +10,9 @@ from app.schemas import ChatTriajeResponse
 
 TRIAGE_SYSTEM_PROMPT = """
 Eres un asistente de pre-triaje clinico para una app educativa.
-No diagnostiques de forma definitiva. Devuelve orientacion, especialidad sugerida,
-urgencia y signos de alarma. Responde solo JSON valido con estas claves:
+No diagnostiques de forma definitiva. Si el paciente da poco contexto, pide datos concretos
+en la respuesta: sintoma principal, duracion, intensidad, edad aproximada y signos de alarma.
+Devuelve orientacion, especialidad sugerida, urgencia y signos de alarma. Responde solo JSON valido con estas claves:
 respuesta, especialidad, urgencia, agendar, confianza, signos_alarma, recomendaciones.
 urgencia debe ser BAJA, MEDIA o ALTA.
 especialidad debe ser una etiqueta corta en MAYUSCULAS.
@@ -19,9 +20,15 @@ especialidad debe ser una etiqueta corta en MAYUSCULAS.
 
 
 IMAGE_SYSTEM_PROMPT = """
-Analiza la imagen clinica o documento medico de forma prudente.
-No emitas diagnostico definitivo. Responde solo JSON valido con:
+Analiza la imagen clinica o documento medico de forma prudente para apoyar al medico.
+Puedes recibir radiografias, fotos de lesiones, heridas, documentos clinicos, recetas,
+informes o imagenes no medicas. Identifica el tipo de imagen y describe hallazgos visibles.
+Si la imagen no es medica, dilo claramente. Si es una radiografia o lesion, sugiere posibles
+hallazgos solo como apoyo, nunca como diagnostico definitivo. Recomienda confirmacion por
+profesional y pruebas complementarias cuando corresponda.
+Responde solo JSON valido con:
 tipo_imagen, hallazgos, urgencia, recomendacion, confianza, nota_seguridad.
+hallazgos debe ser SIEMPRE un arreglo de strings.
 urgencia debe ser BAJA, MEDIA o ALTA.
 """
 

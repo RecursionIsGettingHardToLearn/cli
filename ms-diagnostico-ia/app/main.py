@@ -1,5 +1,6 @@
 import json
 
+from datetime import datetime
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -12,6 +13,8 @@ from app.schemas import (
     ChatTriajeResponse,
     DocumentoResponse,
     ImagenAnalisisResponse,
+    IndicadoresIaResponse,
+    RevisionResultadoRequest,
     ResultadoResponse,
 )
 from app.services.gemini import gemini_image_analysis, gemini_triage
@@ -52,6 +55,22 @@ def documento_to_response(doc: DocumentoClinico) -> DocumentoResponse:
     )
 
 
+def resultado_to_response(row: ResultadoIa) -> ResultadoResponse:
+    return ResultadoResponse(
+        id=row.id,
+        paciente_id=row.paciente_id,
+        documento_id=row.documento_id,
+        tipo=row.tipo,
+        proveedor=row.proveedor,
+        resultado=json.loads(row.resultado_json),
+        estado_revision=row.estado_revision,
+        decision_medica=row.decision_medica,
+        revisado_por=row.revisado_por,
+        revisado_en=row.revisado_en,
+        creado_en=row.creado_en,
+    )
+
+
 @app.get("/health")
 def health(settings: Settings = Depends(get_settings)) -> dict:
     return {
@@ -83,6 +102,7 @@ async def chat_triaje(
         paciente_id=payload.paciente_id,
         entrada_resumen=payload.mensaje[:500],
         resultado=result.model_dump(),
+        estado_revision="NO_APLICA",
     )
     return result
 
@@ -140,7 +160,7 @@ async def analizar_imagen(
     if analysis is None:
         analysis = fallback_image_analysis(doc.nombre_original, doc.content_type)
 
-    save_result(
+    row = save_result(
         db,
         tipo="analisis_imagen",
         proveedor=analysis["proveedor"],
@@ -148,8 +168,14 @@ async def analizar_imagen(
         documento_id=doc.id,
         entrada_resumen=descripcion,
         resultado=analysis,
+        estado_revision="PENDIENTE",
     )
-    return ImagenAnalisisResponse(documento=documento_to_response(doc), **analysis)
+    return ImagenAnalisisResponse(
+        resultado_id=row.id,
+        documento=documento_to_response(doc),
+        estado_revision=row.estado_revision,
+        **analysis,
+    )
 
 
 @app.get("/api/resultados/paciente/{paciente_id}", response_model=list[ResultadoResponse])
@@ -161,15 +187,56 @@ def resultados_por_paciente(paciente_id: str, db: Session = Depends(get_db)) -> 
         .limit(50)
         .all()
     )
-    return [
-        ResultadoResponse(
-            id=row.id,
-            paciente_id=row.paciente_id,
-            documento_id=row.documento_id,
-            tipo=row.tipo,
-            proveedor=row.proveedor,
-            resultado=json.loads(row.resultado_json),
-            creado_en=row.creado_en,
-        )
-        for row in rows
-    ]
+    return [resultado_to_response(row) for row in rows]
+
+
+@app.get("/api/resultados/{resultado_id}", response_model=ResultadoResponse)
+def obtener_resultado(resultado_id: int, db: Session = Depends(get_db)) -> ResultadoResponse:
+    row = db.get(ResultadoIa, resultado_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Resultado IA no encontrado")
+    return resultado_to_response(row)
+
+
+@app.patch("/api/resultados/{resultado_id}/revision", response_model=ResultadoResponse)
+def revisar_resultado(
+    resultado_id: int,
+    payload: RevisionResultadoRequest,
+    db: Session = Depends(get_db),
+) -> ResultadoResponse:
+    row = db.get(ResultadoIa, resultado_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Resultado IA no encontrado")
+    if row.tipo != "analisis_imagen":
+        raise HTTPException(status_code=400, detail="Solo los analisis de imagen requieren revision medica")
+
+    row.estado_revision = payload.estado_revision
+    row.decision_medica = payload.decision_medica
+    row.revisado_por = payload.revisado_por
+    row.revisado_en = datetime.utcnow() if payload.estado_revision != "PENDIENTE" else None
+    db.commit()
+    db.refresh(row)
+    return resultado_to_response(row)
+
+
+@app.get("/api/indicadores", response_model=IndicadoresIaResponse)
+def indicadores_ia(db: Session = Depends(get_db)) -> IndicadoresIaResponse:
+    rows = db.query(ResultadoIa).all()
+    image_rows = [row for row in rows if row.tipo == "analisis_imagen"]
+    triage_rows = [row for row in rows if row.tipo == "chat_triaje"]
+
+    def urgency(row: ResultadoIa) -> str:
+        try:
+            return str(json.loads(row.resultado_json).get("urgencia", "")).upper()
+        except json.JSONDecodeError:
+            return ""
+
+    return IndicadoresIaResponse(
+        total_resultados=len(rows),
+        analisis_imagen=len(image_rows),
+        pre_triajes=len(triage_rows),
+        pendientes_revision=sum(1 for row in image_rows if row.estado_revision == "PENDIENTE"),
+        confirmados=sum(1 for row in image_rows if row.estado_revision == "CONFIRMADO"),
+        descartados=sum(1 for row in image_rows if row.estado_revision == "DESCARTADO"),
+        urgencias_altas=sum(1 for row in rows if urgency(row) == "ALTA"),
+    )

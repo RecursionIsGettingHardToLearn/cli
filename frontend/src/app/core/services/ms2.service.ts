@@ -42,6 +42,19 @@ export class Ms2Service {
       this.http.get(`${this.base}/api/resultados/paciente/${pacienteId}`, { headers }));
   }
 
+  revisarResultado(resultadoId: number, estado: 'CONFIRMADO' | 'DESCARTADO' | 'PENDIENTE', decision?: string): Observable<any> {
+    return this.withAuth(headers =>
+      this.http.patch(`${this.base}/api/resultados/${resultadoId}/revision`, {
+        estado_revision: estado,
+        decision_medica: decision ?? null,
+      }, { headers }));
+  }
+
+  indicadoresIa(): Observable<any> {
+    return this.withAuth(headers =>
+      this.http.get(`${this.base}/api/indicadores`, { headers }));
+  }
+
   // --- Documentos (gestion documental basica) ---
   subirDocumento(form: FormData): Observable<any> {
     return this.withAuth(headers =>

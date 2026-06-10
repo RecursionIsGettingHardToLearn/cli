@@ -32,6 +32,7 @@ class DocumentoResponse(BaseModel):
 
 
 class ImagenAnalisisResponse(BaseModel):
+    resultado_id: int | None = None
     documento: DocumentoResponse | None = None
     proveedor: str
     tipo_imagen: str
@@ -40,6 +41,7 @@ class ImagenAnalisisResponse(BaseModel):
     recomendacion: str
     confianza: float
     nota_seguridad: str
+    estado_revision: str = "PENDIENTE"
 
 
 class ResultadoResponse(BaseModel):
@@ -49,5 +51,24 @@ class ResultadoResponse(BaseModel):
     tipo: str
     proveedor: str
     resultado: dict[str, Any]
+    estado_revision: str
+    decision_medica: str | None = None
+    revisado_por: str | None = None
+    revisado_en: datetime | None = None
     creado_en: datetime
 
+
+class RevisionResultadoRequest(BaseModel):
+    estado_revision: str = Field(pattern="^(CONFIRMADO|DESCARTADO|PENDIENTE)$")
+    decision_medica: str | None = Field(default=None, max_length=1000)
+    revisado_por: str | None = Field(default=None, max_length=120)
+
+
+class IndicadoresIaResponse(BaseModel):
+    total_resultados: int
+    analisis_imagen: int
+    pre_triajes: int
+    pendientes_revision: int
+    confirmados: int
+    descartados: int
+    urgencias_altas: int

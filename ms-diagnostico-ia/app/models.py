@@ -28,4 +28,8 @@ class ResultadoIa(Base):
     proveedor = Column(String(60), nullable=False)
     entrada_resumen = Column(Text, nullable=True)
     resultado_json = Column(Text, nullable=False)
+    estado_revision = Column(String(30), default="PENDIENTE", nullable=False)
+    decision_medica = Column(Text, nullable=True)
+    revisado_por = Column(String(120), nullable=True)
+    revisado_en = Column(DateTime, nullable=True)
     creado_en = Column(DateTime, default=datetime.utcnow, nullable=False)

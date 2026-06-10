@@ -84,6 +84,7 @@ def save_result(
     paciente_id: str | None = None,
     documento_id: int | None = None,
     entrada_resumen: str | None = None,
+    estado_revision: str = "PENDIENTE",
 ) -> ResultadoIa:
     row = ResultadoIa(
         paciente_id=paciente_id,
@@ -92,6 +93,7 @@ def save_result(
         proveedor=proveedor,
         entrada_resumen=entrada_resumen,
         resultado_json=json.dumps(resultado, ensure_ascii=False),
+        estado_revision=estado_revision,
     )
     db.add(row)
     db.commit()
