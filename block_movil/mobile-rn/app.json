@@ -12,6 +12,7 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Esta app usa la camara para tomar fotos de recetas y documentos clinicos.",
+        "NSPhotoLibraryUsageDescription": "Esta app usa tu galeria para seleccionar imagenes o documentos clinicos.",
         "NSLocationWhenInUseUsageDescription": "Esta app usa tu ubicacion para registrar la sucursal de la farmacia.",
         "NSFaceIDUsageDescription": "Esta app usa Face ID para confirmar tu identidad antes de operaciones criticas.",
         "NSMicrophoneUsageDescription": "Esta app usa el microfono para generar reportes por voz con IA."
@@ -51,6 +52,13 @@
           "cameraPermission": "Esta app usa la camara para tomar fotos de recetas y documentos clinicos."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Esta app usa tu galeria para seleccionar imagenes o documentos clinicos."
+        }
+      ],
+      "expo-document-picker",
       [
         "expo-location",
         {

@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { gql, useMutation, useQuery } from '@apollo/client';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import { env } from '../config/env';
 
@@ -69,6 +71,7 @@ export function ChatTriajeScreen() {
   const [mensajes, setMensajes] = useState<Burbuja[]>([]);
   const [texto, setTexto] = useState('');
   const [cargando, setCargando] = useState(false);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
   const [sugerencia, setSugerencia] = useState<Sugerencia | null>(null);
   const listaRef = useRef<FlatList<Burbuja>>(null);
 
@@ -195,6 +198,179 @@ export function ChatTriajeScreen() {
     }
   };
 
+  const inferirMime = (uri: string) => {
+    const clean = uri.split('?')[0].toLowerCase();
+    if (clean.endsWith('.png')) return 'image/png';
+    if (clean.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  };
+
+  const nombreArchivo = (uri: string) => {
+    const raw = uri.split('/').pop()?.split('?')[0];
+    return raw && raw.includes('.') ? raw : `estudio-${Date.now()}.jpg`;
+  };
+
+  const pacienteActualId = () => dataPaciente?.miPaciente?.id as string | undefined;
+
+  const enviarImagen = async (asset: ImagePicker.ImagePickerAsset, origen: 'camara' | 'galeria') => {
+    if (subiendoImagen) return;
+    const pacienteId = pacienteActualId();
+    if (!pacienteId) {
+      agregar({
+        id: nuevoId(),
+        rol: 'bot',
+        texto:
+          'No encontre tu registro de paciente vinculado a esta cuenta. ' +
+          'No puedo asociar la imagen clinica a tu historia.',
+      });
+      return;
+    }
+
+    setSubiendoImagen(true);
+    agregar({
+      id: nuevoId(),
+      rol: 'user',
+      texto: origen === 'camara' ? 'Envie una imagen tomada con la camara.' : 'Envie una imagen de mi galeria.',
+    });
+
+    const form = new FormData();
+    form.append('paciente_id', pacienteId);
+    form.append('descripcion', 'Imagen enviada desde la app movil para apoyo de pre-triaje');
+    form.append('file', {
+      uri: asset.uri,
+      name: asset.fileName || nombreArchivo(asset.uri),
+      type: asset.mimeType || inferirMime(asset.uri),
+    } as any);
+
+    try {
+      const resp = await fetch(`${env.diagnosticosUrl}/api/analizar-imagen`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: form,
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data?.detail || data?.error || `HTTP ${resp.status}`);
+      }
+      const hallazgos = Array.isArray(data.hallazgos) ? data.hallazgos.slice(0, 3).join(' ') : '';
+      agregar({
+        id: nuevoId(),
+        rol: 'bot',
+        texto:
+          `Imagen recibida y analizada. Urgencia: ${data.urgencia ?? 'NO DEFINIDA'}. ` +
+          `Confianza: ${data.confianza ?? 'N/D'}. ` +
+          `${hallazgos ? `Hallazgos: ${hallazgos} ` : ''}` +
+          'Un medico debe confirmar el resultado.',
+      });
+    } catch (e: any) {
+      agregar({
+        id: nuevoId(),
+        rol: 'bot',
+        texto: 'No pude subir o analizar la imagen (' + (e?.message ?? 'error') + ').',
+      });
+    } finally {
+      setSubiendoImagen(false);
+    }
+  };
+
+  const tomarFoto = async () => {
+    if (subiendoImagen) return;
+    const permiso = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permiso.granted) {
+      agregar({ id: nuevoId(), rol: 'bot', texto: 'Necesito permiso de camara para tomar la imagen.' });
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (!result.canceled && result.assets[0]) {
+      await enviarImagen(result.assets[0], 'camara');
+    }
+  };
+
+  const elegirImagen = async () => {
+    if (subiendoImagen) return;
+    const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permiso.granted) {
+      agregar({ id: nuevoId(), rol: 'bot', texto: 'Necesito permiso de galeria para seleccionar la imagen.' });
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (!result.canceled && result.assets[0]) {
+      await enviarImagen(result.assets[0], 'galeria');
+    }
+  };
+
+  const elegirArchivo = async () => {
+    if (subiendoImagen) return;
+    const pacienteId = pacienteActualId();
+    if (!pacienteId) {
+      agregar({
+        id: nuevoId(),
+        rol: 'bot',
+        texto:
+          'No encontre tu registro de paciente vinculado a esta cuenta. ' +
+          'No puedo asociar el documento clinico.',
+      });
+      return;
+    }
+
+    const result = await DocumentPicker.getDocumentAsync({
+      copyToCacheDirectory: true,
+      multiple: false,
+      type: ['image/*', 'application/pdf'],
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    const asset = result.assets[0];
+    setSubiendoImagen(true);
+    agregar({ id: nuevoId(), rol: 'user', texto: `Subi el documento ${asset.name}.` });
+
+    const form = new FormData();
+    form.append('paciente_id', pacienteId);
+    form.append('descripcion', 'Documento clinico enviado desde la app movil');
+    form.append('file', {
+      uri: asset.uri,
+      name: asset.name || nombreArchivo(asset.uri),
+      type: asset.mimeType || 'application/octet-stream',
+    } as any);
+
+    try {
+      const resp = await fetch(`${env.diagnosticosUrl}/api/documentos`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session?.access_token ?? ''}`,
+        },
+        body: form,
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data?.detail || data?.error || `HTTP ${resp.status}`);
+      }
+      agregar({
+        id: nuevoId(),
+        rol: 'bot',
+        texto:
+          `Documento guardado correctamente. ID: ${data.id}. ` +
+          (data.s3_key ? `Archivo en S3: ${data.s3_key}.` : ''),
+      });
+    } catch (e: any) {
+      agregar({
+        id: nuevoId(),
+        rol: 'bot',
+        texto: 'No pude subir el documento (' + (e?.message ?? 'error') + ').',
+      });
+    } finally {
+      setSubiendoImagen(false);
+    }
+  };
+
   const renderItem = ({ item }: { item: Burbuja }) => (
     <View
       style={[
@@ -246,6 +422,30 @@ export function ChatTriajeScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <View style={styles.filaAdjuntos}>
+        <TouchableOpacity
+          style={[styles.botonAdjunto, subiendoImagen && styles.botonDeshabilitado]}
+          onPress={tomarFoto}
+          disabled={subiendoImagen}
+        >
+          <Text style={styles.botonAdjuntoTexto}>{subiendoImagen ? 'Subiendo...' : 'Camara'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.botonAdjunto, subiendoImagen && styles.botonDeshabilitado]}
+          onPress={elegirImagen}
+          disabled={subiendoImagen}
+        >
+          <Text style={styles.botonAdjuntoTexto}>Galeria</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.botonAdjunto, subiendoImagen && styles.botonDeshabilitado]}
+          onPress={elegirArchivo}
+          disabled={subiendoImagen}
+        >
+          <Text style={styles.botonAdjuntoTexto}>Archivo</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.filaInput}>
         <TextInput
@@ -302,6 +502,25 @@ const styles = StyleSheet.create({
   tarjetaTitulo: { color: '#065f46', fontWeight: '600', marginBottom: 8 },
   botonAgendar: { backgroundColor: '#0f6e56', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
   botonAgendarTexto: { color: '#fff', fontWeight: '600' },
+  filaAdjuntos: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  botonAdjunto: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#0f6e56',
+    borderRadius: 10,
+    paddingVertical: 9,
+    alignItems: 'center',
+    backgroundColor: '#ecfdf5',
+  },
+  botonAdjuntoTexto: { color: '#065f46', fontWeight: '700', fontSize: 13 },
   filaInput: {
     flexDirection: 'row',
     alignItems: 'flex-end',
