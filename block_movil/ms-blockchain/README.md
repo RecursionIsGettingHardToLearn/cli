@@ -113,31 +113,46 @@ ms-gestion llama a `POST /recetas` cada vez que un médico emite una receta con 
 
 Ver `.env.example`.
 
-## Despliegue en Render (pendiente)
+## Despliegue en Azure
 
-> **OJO**: en `environment.prod.ts` del frontend, `blockchainUrl` apuntaba a
-> `https://rr-ch3a.onrender.com`, que es el **Spring Boot (ms-gestion)**, no este
-> servicio. Este microservicio AÚN NO está desplegado; por eso la tarjeta de
-> saldo en `/mis-recetas` (rol MEDICO) muestra "no disponible" en la nube.
+El microservicio está desplegado en **Azure App Service**:
 
-Pasos para desplegarlo:
+- **Web app**: `ms-blockchain-recetas` (Node 22, Linux)
+- **Plan**: F1 gratuito (`plan-blockmovil`), región `brazilsouth`
+- **Resource group**: `rg-blockmovil`
+- **URL**: https://ms-blockchain-recetas.azurewebsites.net
+- **Health check**: `GET /health`
 
-1. En Render: **New → Web Service**, repo `mat2346/rr`, Root Directory
-   `block_movil/ms-blockchain`, Build Command `npm install`, Start Command
-   `npm start` (instancia Free sirve).
-2. Variables de entorno del servicio:
+Variables de entorno configuradas como *app settings* de la web app:
 
-   ```ini
-   AMOY_RPC_URL=https://rpc-amoy.polygon.technology
-   PRIVATE_KEY=<la wallet del sistema, ver .env local>
-   CONTRACT_ADDRESS=0xBa43Cc53c22851505179e0163A24E77681374805
-   SUPABASE_JWKS_URI=https://yiyfwfvxdseamnelgetf.supabase.co/auth/v1/.well-known/jwks.json
-   # CORS con comodín: cubre los dominios rotativos de los deploys de Vercel
-   CORS_ORIGINS=http://localhost:4200,https://*-mat2346s-projects.vercel.app,https://frontendangular*.vercel.app
-   ```
+```ini
+AMOY_RPC_URL=https://rpc-amoy.polygon.technology
+PRIVATE_KEY=<la wallet del sistema, ver .env local>
+CONTRACT_ADDRESS=0xBa43Cc53c22851505179e0163A24E77681374805
+SUPABASE_JWKS_URI=https://yiyfwfvxdseamnelgetf.supabase.co/auth/v1/.well-known/jwks.json
+# CORS con comodín: cubre los dominios rotativos de los deploys de Vercel
+CORS_ORIGINS=http://localhost:4200,https://*-mat2346s-projects.vercel.app,https://frontendangular*.vercel.app
+SCM_DO_BUILD_DURING_DEPLOYMENT=true
+NODE_ENV=production
+```
 
-   El `SUPABASE_JWKS_URI` debe ser del MISMO proyecto Supabase que usa el
-   frontend (`yiyfwfvxdseamnelgetf`), si no, todos los tokens darán 401.
-3. En Vercel (proyecto del frontend): poner la env var `BLOCKCHAIN_URL` con la
-   URL que Render asigne (p.ej. `https://ms-blockchain-XXXX.onrender.com`) y
-   redesplegar. `set-env.js` la inyecta en `environment.prod.ts` en el build.
+El `SUPABASE_JWKS_URI` debe ser del MISMO proyecto Supabase que usa el
+frontend (`yiyfwfvxdseamnelgetf`), si no, todos los tokens darán 401.
+
+### Redeploy
+
+Empaquetar solo `src/`, `artifacts/contracts/`, `deployments/` y `package*.json`
+en un zip (sin `node_modules`; Azure instala dependencias en el deploy gracias a
+`SCM_DO_BUILD_DURING_DEPLOYMENT=true`) y subirlo:
+
+```bash
+az webapp deploy --resource-group rg-blockmovil --name ms-blockchain-recetas --src-path <zip> --type zip
+```
+
+En Vercel (proyecto del frontend): la env var `BLOCKCHAIN_URL` debe apuntar a la
+URL de Azure (`https://ms-blockchain-recetas.azurewebsites.net`) y hay que
+redesplegar el frontend. `set-env.js` la inyecta en `environment.prod.ts` en el build.
+
+> **Limitación del plan F1**: la app se duerme tras ~20 minutos sin tráfico (el
+> siguiente request sufre un arranque en frío de ~30-60 s) y tiene una cuota de
+> 60 minutos de CPU al día.
