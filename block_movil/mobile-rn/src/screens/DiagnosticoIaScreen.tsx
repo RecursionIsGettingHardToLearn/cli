@@ -15,7 +15,10 @@ import {
   COLORS,
   fmtFecha,
 } from '../ui/kit';
-import { PacienteSearch, type PacienteLite } from '../components/PacienteSearch';
+import { type PacienteLite } from '../components/PacienteSearch';
+import { PacienteDropdown } from '../components/PacienteDropdown';
+import { useMutation } from '@apollo/client';
+import { NOTIFICAR_RESULTADO } from '../graphql/queries';
 
 /** Diagnóstico con IA (MEDICO / ADMINISTRADOR).
  *
@@ -68,6 +71,7 @@ export function DiagnosticoIaScreen() {
   const [resultado, setResultado] = useState<AnalisisIa | null>(null);
   const [previos, setPrevios] = useState<ResultadoPrevio[]>([]);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'warn' | 'error'; text: string } | null>(null);
+  const [notificar] = useMutation(NOTIFICAR_RESULTADO);
 
   async function abrirCamara() {
     setMsg(null);
@@ -136,7 +140,32 @@ export function DiagnosticoIaScreen() {
       const data = await resp.json();
       if (!resp.ok) throw new Error(data?.detail || data?.error || `HTTP ${resp.status}`);
       setResultado(data as AnalisisIa);
-      if (paciente) cargarPrevios(paciente);
+      if (paciente) {
+        cargarPrevios(paciente);
+        // Push al PACIENTE: su resultado ya esta disponible. Es best-effort:
+        // si falla la red o el paciente no tiene la app, no rompe el analisis.
+        try {
+          const r = await notificar({
+            variables: {
+              pacienteId: paciente.id,
+              tipoEstudio: (data as AnalisisIa).tipo_imagen || 'estudio',
+            },
+          });
+          if (r.data?.notificarResultado) {
+            setMsg({
+              kind: 'ok',
+              text: `🔔 Notificación enviada al teléfono de ${paciente.nombre}: su resultado está disponible.`,
+            });
+          } else {
+            setMsg({
+              kind: 'warn',
+              text: `${paciente.nombre} aún no tiene la app instalada (sin token de notificaciones), así que no se le pudo avisar.`,
+            });
+          }
+        } catch {
+          setMsg({ kind: 'warn', text: 'El análisis se guardó, pero no se pudo enviar la notificación al paciente.' });
+        }
+      }
     } catch (e: any) {
       setMsg({
         kind: 'error',
@@ -154,7 +183,7 @@ export function DiagnosticoIaScreen() {
     <Screen>
       <Card>
         <SectionTitle>Paciente (opcional)</SectionTitle>
-        <PacienteSearch selected={paciente} onSelect={onSelect} onClear={() => setPaciente(null)} />
+        <PacienteDropdown selected={paciente} onSelect={onSelect} onClear={() => setPaciente(null)} />
       </Card>
 
       <Card>

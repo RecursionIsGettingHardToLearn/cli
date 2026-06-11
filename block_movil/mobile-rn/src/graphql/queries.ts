@@ -311,3 +311,13 @@ export const RECETAS_POR_PACIENTE = gql`
     }
   }
 `;
+
+// Push #3 — avisar al paciente que su resultado de IA ya esta disponible.
+// La resuelve el gateway (rol MEDICO/ADMINISTRADOR): busca el expoPushToken
+// del paciente y le envia la notificacion a SU telefono. Devuelve false si
+// el paciente aun no tiene la app instalada (sin token registrado).
+export const NOTIFICAR_RESULTADO = gql`
+  mutation NotificarResultado($pacienteId: ID!, $tipoEstudio: String) {
+    notificarResultado(pacienteId: $pacienteId, tipoEstudio: $tipoEstudio)
+  }
+`;
