@@ -22,7 +22,8 @@ export const MENU: MenuItem[] = [
   // Nuevos (MS2 REST)
   { label: 'Diagnóstico IA',   icon: 'pi-bolt',      route: '/diagnostico', roles: ['ADMINISTRADOR', 'MEDICO'] },
   { label: 'Documentos',       icon: 'pi-folder',    route: '/documentos',  roles: ['ADMINISTRADOR', 'MEDICO', 'PACIENTE'] },
-  { label: 'Pre-triaje',       icon: 'pi-upload',    route: '/pre-triaje',  roles: ['PACIENTE'] }
+  { label: 'Pre-triaje',       icon: 'pi-upload',    route: '/pre-triaje',  roles: ['PACIENTE'] },
+  { label: 'Reportes',         icon: 'pi-chart-line',route: '/reportes',    roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] }
 ];
 
 export function homePorRol(rol: RolUsuario): string {

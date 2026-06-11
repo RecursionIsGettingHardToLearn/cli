@@ -31,6 +31,12 @@ export class Ms2Service {
       this.http.post(`${this.base}/api/chat-triaje`, { mensaje: sintomas }, { headers }));
   }
 
+  // --- Reportes con IA por voz ---
+  reporteIa(form: FormData): Observable<any> {
+    return this.withAuth(headers =>
+      this.http.post(`${this.base}/api/reporte-ia`, form, { headers }));
+  }
+
   // --- Diagnóstico IA ---
   diagnosticar(form: FormData): Observable<any> {
     return this.withAuth(headers =>

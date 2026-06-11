@@ -98,6 +98,12 @@ export const APP_ROUTES: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['PACIENTE'] },
         loadComponent: () => import('./features/pre-triaje/pre-triaje.component').then(m => m.PreTriajeComponent)
+      },
+      {
+        path: 'reportes',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] },
+        loadComponent: () => import('./features/reportes/reportes.component').then(m => m.ReportesComponent)
       }
     ]
   },
