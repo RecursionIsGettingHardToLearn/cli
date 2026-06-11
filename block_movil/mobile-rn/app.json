@@ -13,7 +13,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Esta app usa la camara para tomar fotos de recetas y documentos clinicos.",
         "NSLocationWhenInUseUsageDescription": "Esta app usa tu ubicacion para registrar la sucursal de la farmacia.",
-        "NSFaceIDUsageDescription": "Esta app usa Face ID para confirmar tu identidad antes de operaciones criticas."
+        "NSFaceIDUsageDescription": "Esta app usa Face ID para confirmar tu identidad antes de operaciones criticas.",
+        "NSMicrophoneUsageDescription": "Esta app usa el microfono para generar reportes por voz con IA."
       }
     },
     "android": {
@@ -66,6 +67,12 @@
         "expo-local-authentication",
         {
           "faceIDPermission": "Esta app usa Face ID para confirmar tu identidad."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Esta app usa el microfono para generar reportes por voz con IA."
         }
       ]
     ],

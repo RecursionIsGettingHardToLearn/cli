@@ -11,6 +11,16 @@ import { MisFacturasScreen } from '../screens/MisFacturasScreen';
 import { VerificadorRecetaScreen } from '../screens/VerificadorRecetaScreen';
 import { RecursosNativosScreen } from '../screens/RecursosNativosScreen';
 import { ChatTriajeScreen } from '../screens/ChatTriajeScreen';
+import { CitasScreen } from '../screens/CitasScreen';
+import { HistoriaScreen } from '../screens/HistoriaScreen';
+import { DiagnosticoScreen } from '../screens/DiagnosticoScreen';
+import { RecepcionScreen } from '../screens/RecepcionScreen';
+import { CajaScreen } from '../screens/CajaScreen';
+import { FacturasScreen } from '../screens/FacturasScreen';
+import { InventarioScreen } from '../screens/InventarioScreen';
+import { AdministracionScreen } from '../screens/AdministracionScreen';
+import { DashboardBiScreen } from '../screens/DashboardBiScreen';
+import { ReportesScreen } from '../screens/ReportesScreen';
 import type { RolUsuario } from '../config/supabase';
 
 const Stack = createNativeStackNavigator();
@@ -25,8 +35,18 @@ interface MenuItem {
 
 const MENU: MenuItem[] = [
   { name: 'Home', label: 'Inicio', component: HomeScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] },
+  { name: 'Citas', label: 'Citas', component: CitasScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'PACIENTE'] },
   { name: 'MisRecetas', label: 'Mis recetas', component: MisRecetasScreen, roles: ['MEDICO', 'PACIENTE'] },
   { name: 'MisFacturas', label: 'Mis facturas', component: MisFacturasScreen, roles: ['PACIENTE'] },
+  { name: 'Historia', label: 'Historia clinica', component: HistoriaScreen, roles: ['ADMINISTRADOR', 'MEDICO'] },
+  { name: 'Diagnostico', label: 'Diagnostico', component: DiagnosticoScreen, roles: ['ADMINISTRADOR', 'MEDICO'] },
+  { name: 'Recepcion', label: 'Recepcion', component: RecepcionScreen, roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
+  { name: 'Caja', label: 'Caja', component: CajaScreen, roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
+  { name: 'Facturas', label: 'Facturas', component: FacturasScreen, roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
+  { name: 'Inventario', label: 'Inventario', component: InventarioScreen, roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
+  { name: 'Administracion', label: 'Administracion', component: AdministracionScreen, roles: ['ADMINISTRADOR'] },
+  { name: 'DashboardBi', label: 'Dashboard BI', component: DashboardBiScreen, roles: ['ADMINISTRADOR'] },
+  { name: 'Reportes', label: 'Reportes', component: ReportesScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] },
   { name: 'ChatTriaje', label: 'Asistente IA', component: ChatTriajeScreen, roles: ['PACIENTE', 'ADMINISTRADOR', 'MEDICO'] },
   { name: 'Verificador', label: 'Verificar receta', component: VerificadorRecetaScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO'] },
   { name: 'RecursosNativos', label: 'Recursos del telefono', component: RecursosNativosScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] },

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { LIST_MEDICAMENTOS, CREATE_MEDICAMENTO, LIST_CATEGORIAS, LIST_LOTES, REGISTRAR_LOTE, LIST_PROVEEDORES } from '../../core/graphql/queries';
+import { PaginadorComponent, paginar } from '../../shared/paginador/paginador.component';
 
 // Nombre: no puede ser SOLO numeros (debe tener al menos una letra) y >= 2 chars.
 const NOMBRE_REGEX = /^(?=.*[A-Za-zÁÉÍÓÚáéíóúÑñ]).{2,150}$/;
@@ -11,7 +12,7 @@ const CODIGO_LOTE_REGEX = /^[A-Za-z0-9\-]{2,50}$/;
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginadorComponent],
   template: `
     <h1 class="page-title">Inventario</h1>
 
@@ -110,7 +111,7 @@ const CODIGO_LOTE_REGEX = /^[A-Za-z0-9\-]{2,50}$/;
           <tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock mín</th><th>Flags</th><th></th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let m of medicamentos">
+          <tr *ngFor="let m of medicamentosPagina">
             <td>{{ m.nombre }}</td>
             <td>{{ m.categoria?.nombre || '—' }}</td>
             <td>Bs {{ m.precioVenta }}</td>
@@ -127,6 +128,10 @@ const CODIGO_LOTE_REGEX = /^[A-Za-z0-9\-]{2,50}$/;
           </tr>
         </tbody>
       </table>
+
+      <app-paginador [total]="medicamentos.length" [pagina]="pagina" [porPagina]="porPagina"
+                     (paginaChange)="pagina = $event"
+                     (porPaginaChange)="porPagina = $event"></app-paginador>
 
       <div *ngIf="medSeleccionado" class="lotes-panel">
         <div style="display:flex; justify-content: space-between; align-items: center;">
@@ -285,6 +290,10 @@ export class InventarioComponent implements OnInit {
   readonly todayISO = new Date().toISOString().slice(0, 10);
 
   medicamentos: any[] = [];
+  pagina = 1;
+  porPagina = 10;
+
+  get medicamentosPagina() { return paginar(this.medicamentos, this.pagina, this.porPagina); }
   categorias: any[] = [];
   proveedores: any[] = [];
   lotes: any[] = [];
@@ -309,7 +318,7 @@ export class InventarioComponent implements OnInit {
 
   cargar() {
     this.apollo.query<any>({ query: LIST_MEDICAMENTOS, variables: { q: null, activo: null }, fetchPolicy: 'network-only' })
-      .subscribe(r => this.medicamentos = r.data?.medicamentos ?? []);
+      .subscribe(r => { this.medicamentos = r.data?.medicamentos ?? []; this.pagina = 1; });
   }
 
   toggleFormMed() {

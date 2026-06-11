@@ -2,11 +2,12 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Apollo } from 'apollo-angular';
 import { LIST_FACTURAS, ANULAR_FACTURA } from '../../core/graphql/queries';
+import { PaginadorComponent, paginar } from '../../shared/paginador/paginador.component';
 
 @Component({
   selector: 'app-facturas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PaginadorComponent],
   template: `
     <h1 class="page-title">Facturas emitidas</h1>
 
@@ -25,7 +26,7 @@ import { LIST_FACTURAS, ANULAR_FACTURA } from '../../core/graphql/queries';
           </tr>
         </thead>
         <tbody>
-          <ng-container *ngFor="let f of facturas">
+          <ng-container *ngFor="let f of facturasPagina">
             <tr class="fila" (click)="toggle(f.id)" title="Click para ver el detalle">
               <td class="mono">{{ f.numero }}</td>
               <td>{{ f.fecha | date:'short' }}</td>
@@ -64,6 +65,10 @@ import { LIST_FACTURAS, ANULAR_FACTURA } from '../../core/graphql/queries';
           </ng-container>
         </tbody>
       </table>
+
+      <app-paginador [total]="facturas.length" [pagina]="pagina" [porPagina]="porPagina"
+                     (paginaChange)="pagina = $event"
+                     (porPaginaChange)="porPagina = $event"></app-paginador>
     </div>
   `,
   styles: [`
@@ -91,6 +96,10 @@ import { LIST_FACTURAS, ANULAR_FACTURA } from '../../core/graphql/queries';
 export class FacturasComponent implements OnInit {
   private apollo = inject(Apollo);
   facturas: any[] = [];
+  pagina = 1;
+  porPagina = 10;
+
+  get facturasPagina() { return paginar(this.facturas, this.pagina, this.porPagina); }
   loading = false;
   errorMsg = '';
   expandedId: string | null = null;
@@ -103,6 +112,7 @@ export class FacturasComponent implements OnInit {
     this.apollo.query<any>({ query: LIST_FACTURAS, fetchPolicy: 'network-only' }).subscribe({
       next: r => {
         const lista = r.data?.facturas ?? [];
+        this.pagina = 1;
         this.facturas = [...lista].sort(
           (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
         );

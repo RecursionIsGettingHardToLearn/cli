@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { LIST_PACIENTES, CREATE_PACIENTE } from '../../core/graphql/queries';
+import { PaginadorComponent, paginar } from '../../shared/paginador/paginador.component';
 
 // Reglas de validacion
 const CI_REGEX = /^[0-9]{5,15}$/;
@@ -13,7 +14,7 @@ const EMAIL_REGEX = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 @Component({
   selector: 'app-recepcion',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginadorComponent],
   template: `
     <h1 class="page-title">Recepción — Pacientes</h1>
 
@@ -126,7 +127,7 @@ const EMAIL_REGEX = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
           <tr><th>CI</th><th>Nombre</th><th>Apellido</th><th>Teléfono</th><th>Email</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of pacientes">
+          <tr *ngFor="let p of pacientesPagina">
             <td>{{ p.ci }}</td><td>{{ p.nombre }}</td><td>{{ p.apellido }}</td>
             <td>{{ p.telefono }}</td><td>{{ p.email }}</td>
           </tr>
@@ -135,6 +136,10 @@ const EMAIL_REGEX = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
           </tr>
         </tbody>
       </table>
+
+      <app-paginador [total]="pacientes.length" [pagina]="pagina" [porPagina]="porPagina"
+                     (paginaChange)="pagina = $event"
+                     (porPaginaChange)="porPagina = $event"></app-paginador>
     </div>
   `,
   styles: [`
@@ -178,6 +183,10 @@ export class RecepcionComponent implements OnInit {
   readonly todayISO = new Date().toISOString().slice(0, 10);
 
   pacientes: any[] = [];
+  pagina = 1;
+  porPagina = 10;
+
+  get pacientesPagina() { return paginar(this.pacientes, this.pagina, this.porPagina); }
   q = '';
   showForm = false;
   saving = false;
@@ -190,7 +199,7 @@ export class RecepcionComponent implements OnInit {
 
   buscar() {
     this.apollo.query<any>({ query: LIST_PACIENTES, variables: { q: this.q || null }, fetchPolicy: 'network-only' })
-      .subscribe({ next: r => this.pacientes = r.data?.pacientes ?? [], error: e => console.error(e) });
+      .subscribe({ next: r => { this.pacientes = r.data?.pacientes ?? []; this.pagina = 1; }, error: e => console.error(e) });
   }
 
   toggleForm() {

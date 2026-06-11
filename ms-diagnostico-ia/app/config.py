@@ -15,6 +15,12 @@ class Settings(BaseSettings):
     gemini_image_model: str = "gemini-2.0-flash"
     gemini_fallback_models: str = "gemini-2.5-flash,gemini-2.5-flash-lite"
 
+    # OpenAI: usado por el modulo de REPORTES CON IA POR VOZ.
+    # Whisper transcribe el audio y un modelo de chat arma el plan del reporte.
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-4o-mini"
+    openai_transcribe_model: str = "whisper-1"
+
     database_url: str = "sqlite:///./data/ms_ia.db"
     upload_dir: str = "./data/uploads"
     max_upload_mb: int = 15

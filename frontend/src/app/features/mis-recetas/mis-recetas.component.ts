@@ -133,6 +133,7 @@ import { SaldoBlockchainComponent } from '../saldo-blockchain/saldo-blockchain.c
           <small>tx: <a [href]="'https://amoy.polygonscan.com/tx/' + r.blockchainTx" target="_blank">{{ r.blockchainTx.substring(0, 20) }}…</a></small>
         </div>
         <div *ngIf="verificaciones[r.id]" class="verify-result">
+          <div *ngIf="verificaciones[r.id].verificando" class="meta">⏳ Verificando contra Polygon…</div>
           <div *ngIf="verificaciones[r.id].exists === true" class="verify-ok">
             ✓ Receta registrada en blockchain · Bloque {{ verificaciones[r.id].blockNumber }} · {{ verificaciones[r.id].timestamp ? (formatTs(verificaciones[r.id].timestamp)) : '' }}
           </div>
@@ -263,7 +264,23 @@ export class MisRecetasComponent implements OnInit {
   }
 
   verificar(r: any) {
-    alert('Próximamente: La validación contra la red Polygon de Blockchain será activada pronto.');
+    // Estado "verificando" mientras responde el gateway -> springboot -> ms-blockchain -> Polygon
+    this.verificaciones[r.id] = { verificando: true };
+    this.apollo.query<any>({
+      query: VERIFICAR_RECETA,
+      variables: { id: r.id },
+      fetchPolicy: 'network-only',
+    }).pipe(take(1)).subscribe({
+      next: res => {
+        this.verificaciones[r.id] = res.data?.verificarReceta
+          ?? { error: 'Respuesta vacía del verificador' };
+      },
+      error: e => {
+        this.verificaciones[r.id] = {
+          error: e?.graphQLErrors?.[0]?.message || e.message || 'Servicio de blockchain no disponible',
+        };
+      },
+    });
   }
 
   formatTs(timestamp: number): string {

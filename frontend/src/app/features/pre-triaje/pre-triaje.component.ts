@@ -22,9 +22,25 @@ import { Ms2Service } from '../../core/services/ms2.service';
         {{ cargando ? 'Evaluando…' : 'Evaluar síntomas' }}
       </button>
 
+      <div *ngIf="error" class="error-banner">{{ error }}</div>
+
       <div *ngIf="resultado" class="resultado" [class.alta]="resultado.urgencia==='ALTA'">
+        <p *ngIf="resultado.respuesta" style="margin:0 0 8px;">{{ resultado.respuesta }}</p>
         <div><strong>Especialidad sugerida:</strong> {{ resultado.especialidad }}</div>
         <div><strong>Urgencia:</strong> {{ resultado.urgencia }}</div>
+        <div *ngIf="resultado.signos_alarma?.length" style="margin-top:8px;">
+          <strong>Signos de alarma:</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li *ngFor="let s of resultado.signos_alarma">{{ s }}</li>
+          </ul>
+        </div>
+        <div *ngIf="resultado.recomendaciones?.length" style="margin-top:8px;">
+          <strong>Recomendaciones:</strong>
+          <ul style="margin:4px 0 0 18px; padding:0;">
+            <li *ngFor="let rec of resultado.recomendaciones">{{ rec }}</li>
+          </ul>
+        </div>
+        <div class="meta" style="margin-top:8px;">Proveedor: {{ resultado.proveedor }} · Confianza: {{ resultado.confianza | percent }}</div>
       </div>
     </div>
 
@@ -76,7 +92,23 @@ export class PreTriajeComponent implements OnInit {
   }
 
   evaluar() {
-    alert('Próximamente: Función de Inteligencia Artificial por desarrollar.');
+    const sintomas = this.sintomas.trim();
+    if (!sintomas) return;
+    this.cargando = true;
+    this.resultado = null;
+    this.error = '';
+    this.ms2.preTriaje(sintomas).subscribe({
+      next: r => {
+        this.cargando = false;
+        this.resultado = r;
+      },
+      error: e => {
+        this.cargando = false;
+        this.error = 'No se pudo evaluar los síntomas: '
+          + (e?.error?.detail || e?.message || 'servicio de IA no disponible')
+          + '. Verifica que ms-diagnostico-ia esté corriendo.';
+      },
+    });
   }
 
   agendar() {

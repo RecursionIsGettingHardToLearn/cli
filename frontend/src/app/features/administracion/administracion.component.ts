@@ -7,6 +7,7 @@ import {
   CAMBIAR_ROL_USUARIO, DESACTIVAR_USUARIO, ACTIVAR_USUARIO, ACTUALIZAR_USUARIO,
   CREAR_USUARIO
 } from '../../core/graphql/queries';
+import { PaginadorComponent, paginar } from '../../shared/paginador/paginador.component';
 
 type Rol = 'ADMINISTRADOR' | 'MEDICO' | 'FARMACEUTICO' | 'PACIENTE';
 interface UsuarioRow { id: string; nombre: string; email: string; rol: Rol; activo: boolean; }
@@ -14,7 +15,7 @@ interface UsuarioRow { id: string; nombre: string; email: string; rol: Rol; acti
 @Component({
   selector: 'app-administracion',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginadorComponent],
   template: `
     <h1 class="page-title">Administración</h1>
 
@@ -29,7 +30,7 @@ interface UsuarioRow { id: string; nombre: string; email: string; rol: Rol; acti
           <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th class="acciones">Acciones</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let u of usuarios; trackBy: trackId" [class.inactivo]="!u.activo">
+          <tr *ngFor="let u of usuariosPagina; trackBy: trackId" [class.inactivo]="!u.activo">
             <td>{{ u.nombre }}<span *ngIf="u.id === miId" class="self-tag">tú</span></td>
             <td>{{ u.email }}</td>
             <td>
@@ -76,6 +77,10 @@ interface UsuarioRow { id: string; nombre: string; email: string; rol: Rol; acti
           </tr>
         </tbody>
       </table>
+
+      <app-paginador [total]="usuarios.length" [pagina]="pagina" [porPagina]="porPagina"
+                     (paginaChange)="pagina = $event"
+                     (porPaginaChange)="porPagina = $event"></app-paginador>
       <div *ngIf="errorMsg" class="error-banner">{{ errorMsg }}</div>
     </div>
 
@@ -345,6 +350,10 @@ export class AdministracionComponent implements OnInit {
   readonly ROLES: Rol[] = ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'];
 
   usuarios: UsuarioRow[] = [];
+  pagina = 1;
+  porPagina = 10;
+
+  get usuariosPagina() { return paginar(this.usuarios, this.pagina, this.porPagina); }
   categorias: any[] = [];
   proveedores: any[] = [];
 
@@ -382,7 +391,7 @@ export class AdministracionComponent implements OnInit {
     this.loading = true;
     this.apollo.query<any>({ query: LIST_USUARIOS, fetchPolicy: 'network-only' })
       .subscribe({
-        next: r => { this.usuarios = r.data?.usuarios ?? []; this.loading = false; },
+        next: r => { this.usuarios = r.data?.usuarios ?? []; this.pagina = 1; this.loading = false; },
         error: e => { this.errorMsg = this.parseError(e); this.loading = false; }
       });
   }
