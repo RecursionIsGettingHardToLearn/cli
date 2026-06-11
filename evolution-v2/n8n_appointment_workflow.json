@@ -1,0 +1,304 @@
+{
+  "name": "Bot de Citas (Súper Simple)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolution",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook Evolution",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 300],
+      "webhookId": "evolution-webhook-1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.body.data.key.fromMe }}",
+              "value2": false
+            }
+          ],
+          "string": [
+            {
+              "value1": "={{ $json.body.data.key.remoteJid }}",
+              "operation": "endsWith",
+              "value2": "@s.whatsapp.net"
+            }
+          ]
+        }
+      },
+      "id": "2",
+      "name": "Filtro Anti-Grupos",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst remoteJid = data.body.data.key.remoteJid;\n// Extraer solo el número de teléfono sin el sufijo de WhatsApp\nconst telefono = remoteJid.split('@')[0];\n\nreturn {\n  ...data,\n  telefono_limpio: telefono\n};"
+      },
+      "id": "3",
+      "name": "Extraer Datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.mensaje_recibido }}",
+              "operation": "regex",
+              "value2": "(?i)(cita|agendar|turno|reserva)"
+            }
+          ]
+        }
+      },
+      "id": "3_5",
+      "name": "¿Quiere agendar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://clinica-backend:3000/api/internal/pacientes/by-telefono/{{ $json.telefono_limpio }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "ignoreResponseCode": true
+        }
+      },
+      "id": "4",
+      "name": "Consultar Paciente (Next.js)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.success }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "5",
+      "name": "¿Paciente Registrado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution_api:8080/message/sendText/{{ $('Extraer Datos').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "429683C4C977415CAAFCCE10F7D57E11"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Extraer Datos').item.json.body.data.key.remoteJid }}\",\n  \"text\": \"Lo siento 😔, no logré encontrar tu número ({{ $('Extraer Datos').item.json.telefono_limpio }}) en nuestra base de datos de pacientes.\\n\\nPor favor, acércate a recepción para registrarte y poder agendar citas por este medio. 🏥\"\n}",
+        "options": {}
+      },
+      "id": "6",
+      "name": "Enviar: No Registrado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1100, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution_api:8080/message/sendText/{{ $('Extraer Datos').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "429683C4C977415CAAFCCE10F7D57E11"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Extraer Datos').item.json.body.data.key.remoteJid }}\",\n  \"text\": \"👋 ¡Hola! Soy el asistente virtual de la clínica.\\n\\nSi deseas agendar una cita médica, por favor envíame un mensaje que diga *'quiero agendar una cita'*.\"\n}",
+        "options": {}
+      },
+      "id": "7",
+      "name": "Enviar: Saludo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://clinica-backend:3000/api/internal/citas",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"pacienteId\": \"{{ $json.data.id }}\",\n  \"medicoUid\": \"00000000-0000-0000-0000-000000000000\",\n  \"especialidad\": \"General\",\n  \"motivo\": \"Consulta agendada automáticamente vía WhatsApp\",\n  \"urgencia\": \"Baja\"\n}",
+        "options": {}
+      },
+      "id": "9",
+      "name": "Crear Cita (Next.js)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1100, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution_api:8080/message/sendText/{{ $('Extraer Datos').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "429683C4C977415CAAFCCE10F7D57E11"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Extraer Datos').item.json.body.data.key.remoteJid }}\",\n  \"text\": \"✅ ¡Listo {{ $('Consultar Paciente (Next.js)').item.json.data.nombre }}! Tu cita ha sido agendada con éxito para Consulta General.\\n\\n📅 Fecha y hora: {{ new Date($('Crear Cita (Next.js)').item.json.data.fechaHora).toLocaleString('es-BO', { timeZone: 'America/La_Paz', dateStyle: 'long', timeStyle: 'short' }) }}\\n\\n¡Te esperamos!\"\n}",
+        "options": {}
+      },
+      "id": "10",
+      "name": "Enviar: Confirmación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1300, 100]
+    }
+  ],
+  "connections": {
+    "Webhook Evolution": {
+      "main": [
+        [
+          {
+            "node": "Filtro Anti-Grupos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro Anti-Grupos": {
+      "main": [
+        [
+          {
+            "node": "Extraer Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer Datos": {
+      "main": [
+        [
+          {
+            "node": "¿Quiere agendar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Quiere agendar?": {
+      "main": [
+        [
+          {
+            "node": "Consultar Paciente (Next.js)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar: Saludo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Paciente (Next.js)": {
+      "main": [
+        [
+          {
+            "node": "¿Paciente Registrado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Paciente Registrado?": {
+      "main": [
+        [
+          {
+            "node": "Crear Cita (Next.js)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar: No Registrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Cita (Next.js)": {
+      "main": [
+        [
+          {
+            "node": "Enviar: Confirmación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
