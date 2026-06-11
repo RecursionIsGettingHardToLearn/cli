@@ -60,7 +60,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return error ? { ok: false, error: error.message } : { ok: true };
     },
     signOut: async () => {
-      await supabase.auth.signOut();
+      try {
+        // scope 'local': borra la sesion guardada en ESTE dispositivo sin
+        // requerir red. El signOut por defecto (global) llama al servidor y,
+        // si no hay internet o el refresh token ya expiro, falla y deja al
+        // usuario "atrapado" con sesion abierta.
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch {
+        /* incluso si Supabase falla, abajo forzamos el cierre local */
+      } finally {
+        // Garantiza volver al Login aunque onAuthStateChange no dispare.
+        setSession(null);
+      }
     },
   };
 
