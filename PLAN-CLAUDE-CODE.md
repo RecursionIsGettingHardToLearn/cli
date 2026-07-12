@@ -6,12 +6,12 @@ Plan para que **Claude Code Desktop** termine la implementacion del despliegue d
 
 | Pieza | Estado |
 |---|---|
-| Dockerfile `ms-backend` (Next.js standalone + Prisma) | Listo |
+| Dockerfile `ms-ms-pacientes-nextjs` (Next.js standalone + Prisma) | Listo |
 | Dockerfile `ms-blockchain` (Node 20, solo prod) | Listo |
 | Dockerfile `ms-diagnostico-ia` (Python 3.11) | Ya existia |
-| Dockerfile `ms-springboot` (Maven multi-stage, Java 17) | Ya existia |
+| Dockerfile `ms-springboot-gestion` (Maven multi-stage, Java 17) | Ya existia |
 | Manifiestos `k8s/` de los 4 microservicios | Listos (placeholder `__IMAGE__`) |
-| Endpoint `/api/health` en ms-backend | Listo |
+| Endpoint `/api/health` en ms-ms-pacientes-nextjs | Listo |
 | `output: "standalone"` en `next.config.mjs` | Listo |
 | Workflow reutilizable `.github/workflows/deploy-microservicio.yml` | Listo |
 | 4 workflows por servicio con filtro de paths | Listos |
@@ -94,8 +94,8 @@ Los deployments referencian un ConfigMap y un Secret por servicio. Los ConfigMap
 ```bash
 kubectl create namespace clinica
 
-# MS1 - ms-backend (usar los valores reales del .env)
-kubectl create secret generic ms-backend-secret -n clinica \
+# MS1 - ms-ms-pacientes-nextjs (usar los valores reales del .env)
+kubectl create secret generic ms-ms-pacientes-nextjs-secret -n clinica \
   --from-literal=DATABASE_URL="..." \
   --from-literal=DIRECT_URL="..." \
   --from-literal=SUPABASE_URL="..." \
@@ -109,13 +109,15 @@ kubectl create secret generic ms-blockchain-secret -n clinica \
   --from-literal=CONTRACT_ADDRESS="" \
   --from-literal=SUPABASE_JWKS_URI="..."
 
-# MS3 - ms-springboot
-kubectl create secret generic ms-springboot-secret -n clinica \
+# MS3 - ms-springboot-gestion
+kubectl create secret generic ms-springboot-gestion-secret -n clinica \
   --from-literal=DB_URL="jdbc:postgresql://..." \
   --from-literal=DB_USER="..." \
   --from-literal=DB_PASS="..." \
   --from-literal=SUPABASE_ISSUER="..." \
-  --from-literal=SUPABASE_JWKS_URI="..."
+  --from-literal=SUPABASE_JWKS_URI="..." \
+  --from-literal=STRIPE_SECRET_KEY="sk_test_..." \
+  --from-literal=STRIPE_WEBHOOK_SECRET="whsec_..."
 
 # MS2 - ms-diagnostico-ia (segun su secret.example.yaml: API keys de Gemini/OpenAI, etc.)
 kubectl create secret generic ms-diagnostico-ia-secret -n clinica \
@@ -125,21 +127,25 @@ kubectl create secret generic ms-diagnostico-ia-secret -n clinica \
 
 Revisar `microservicios/ms-diagnostico-ia/k8s/secret.example.yaml` por si su secret exige mas claves, y comparar cada ConfigMap con lo que el codigo realmente lee.
 
+### Sobre la base de datos Postgres de ms-springboot-gestion
+
+El pipeline NO despliega Postgres: el pod se conecta a la base externa que definas en `DB_URL` (la de Supabase que ya usas, o una **Azure Database for PostgreSQL Flexible Server** si quieres todo en Azure). Flyway ejecuta las migraciones de `db/migration` automaticamente al arrancar, y `ddl-auto: validate` hara fallar el pod si el esquema no coincide: eso es senal de credenciales/URL mal puestas, no un bug del deploy.
+
 ## Fase 4 - Validar los builds Docker localmente
 
 Antes del primer push, construir cada imagen en local para cazar errores rapido:
 
 ```bash
-docker build -t test-ms-backend        microservicios/ms-backend
+docker build -t test-ms-ms-pacientes-nextjs        microservicios/ms-ms-pacientes-nextjs
 docker build -t test-ms-blockchain     microservicios/ms-blockchain
 docker build -t test-ms-diagnostico-ia microservicios/ms-diagnostico-ia
-docker build -t test-ms-springboot     microservicios/ms-springboot
+docker build -t test-ms-springboot-gestion     microservicios/ms-springboot-gestion
 ```
 
 Puntos de atencion conocidos:
-- **ms-backend**: `next build` puede requerir variables en build-time si alguna ruta las evalua al compilar. Si falla, pasar `--build-arg` o valores dummy con `ENV` en la etapa build. Verificar tambien que Prisma trace sus engines en la salida standalone (si en runtime falta el engine, copiar `node_modules/.prisma` y `node_modules/@prisma` a la imagen final).
+- **ms-ms-pacientes-nextjs**: `next build` puede requerir variables en build-time si alguna ruta las evalua al compilar. Si falla, pasar `--build-arg` o valores dummy con `ENV` en la etapa build. Verificar tambien que Prisma trace sus engines en la salida standalone (si en runtime falta el engine, copiar `node_modules/.prisma` y `node_modules/@prisma` a la imagen final).
 - **ms-blockchain**: confirmar que `src/server.js` resuelve el ABI/address desde `artifacts/` y `deployments/` con rutas relativas al WORKDIR.
-- **ms-springboot**: el jar se llama `ms-gestion-*.jar`; si el `artifactId` cambia, actualizar el Dockerfile. El Dockerfile actual NO copia `.mvn/` (usa la imagen maven), esta bien asi.
+- **ms-springboot-gestion**: el jar se llama `ms-gestion-*.jar`; si el `artifactId` cambia, actualizar el Dockerfile. El Dockerfile actual NO copia `.mvn/` (usa la imagen maven), esta bien asi.
 
 ## Fase 5 - Primer despliegue
 
@@ -150,15 +156,15 @@ Puntos de atencion conocidos:
 ```bash
 kubectl get pods -n clinica            # 4 pods Running
 kubectl get svc  -n clinica            # 4 services ClusterIP
-kubectl logs -n clinica deploy/ms-backend --tail=50
+kubectl logs -n clinica deploy/ms-ms-pacientes-nextjs --tail=50
 ```
 
 4. Prueba de humo con port-forward:
 
 ```bash
-kubectl port-forward -n clinica svc/ms-backend 3000:3000 &
+kubectl port-forward -n clinica svc/ms-ms-pacientes-nextjs 3000:3000 &
 curl http://localhost:3000/api/health
-kubectl port-forward -n clinica svc/ms-springboot 8080:8080 &
+kubectl port-forward -n clinica svc/ms-springboot-gestion 8080:8080 &
 curl http://localhost:8080/actuator/health
 ```
 
@@ -168,8 +174,8 @@ Los services son ClusterIP (solo red interna). Para exponer:
 
 1. Instalar ingress-nginx (o usar Application Gateway / el add-on `--enable-app-routing` de AKS).
 2. Crear `k8s/ingress.yaml` (nuevo archivo, por ejemplo en una carpeta `k8s-compartido/`) con rutas:
-   - `/api/*` y `/api/graphql` -> `ms-backend:3000`
-   - `/gestion/*` o `/graphql-java` -> `ms-springboot:8080`
+   - `/api/*` y `/api/graphql` -> `ms-ms-pacientes-nextjs:3000`
+   - `/gestion/*` o `/graphql-java` -> `ms-springboot-gestion:8080`
    - `/ia/*` -> `ms-diagnostico-ia:8000`
    - `/blockchain/*` -> `ms-blockchain:3001`
 3. Agregar el `kubectl apply` del ingress al workflow reutilizable (o un workflow aparte `infra.yml`).
@@ -180,7 +186,7 @@ Los services son ClusterIP (solo red interna). Para exponer:
 - [ ] Etapa de **tests** previa al build en el workflow reutilizable (npm test / mvn test / pytest) que bloquee el deploy si falla.
 - [ ] Desplegar el **frontend Angular** (carpeta `frontend/`): como 5to servicio en AKS con nginx, o en Azure Static Web Apps (mas barato).
 - [ ] Decidir que hacer con `n8n` y Evolution API del docker-compose: ¿tambien van a AKS o quedan fuera del alcance?
-- [ ] `HorizontalPodAutoscaler` para ms-backend y ms-springboot.
+- [ ] `HorizontalPodAutoscaler` para ms-ms-pacientes-nextjs y ms-springboot-gestion.
 - [ ] Probar rollback: `kubectl rollout undo deployment/<ms> -n clinica`.
 - [ ] Nota: el `docker-compose.yml` de la raiz referencia rutas viejas (`./backend`, `./springboot`, `./block_movil/...`); actualizarlo a `microservicios/...` para que el entorno local vuelva a funcionar.
 - [ ] **Rotar el PAT de GitHub usado para el push inicial** (se compartio en un chat) y guardar el nuevo solo en el credential manager local.
@@ -191,5 +197,5 @@ Los services son ClusterIP (solo red interna). Para exponer:
 - [ ] Los 4 workflows en verde en la pestaña Actions.
 - [ ] `kubectl get pods -n clinica`: 4/4 Running y probes en Ready.
 - [ ] Health checks responden 200 (Fase 5, paso 4).
-- [ ] ms-backend alcanza a ms-springboot y ms-blockchain por DNS interno (revisar logs al ejercitar el GraphQL).
+- [ ] ms-ms-pacientes-nextjs alcanza a ms-springboot-gestion y ms-blockchain por DNS interno (revisar logs al ejercitar el GraphQL).
 - [ ] Git log sin coautores: `git log --format='%an <%ae>%n%(trailers)' -5`.

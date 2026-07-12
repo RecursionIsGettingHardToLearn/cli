@@ -1,0 +1,19 @@
+# CI/CD de MS1 (ms-ms-pacientes-nextjs): se dispara solo cuando cambia su carpeta.
+name: CI/CD ms-ms-pacientes-nextjs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "microservicios/ms-ms-pacientes-nextjs/**"
+      - ".github/workflows/ms-ms-pacientes-nextjs.yml"
+      - ".github/workflows/deploy-microservicio.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-microservicio.yml
+    with:
+      service_name: ms-ms-pacientes-nextjs
+      service_path: microservicios/ms-ms-pacientes-nextjs
+    secrets: inherit

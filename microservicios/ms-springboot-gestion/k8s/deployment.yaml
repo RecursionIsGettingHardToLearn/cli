@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ms-springboot
+  name: ms-springboot-gestion
   labels:
-    app: ms-springboot
+    app: ms-springboot-gestion
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ms-springboot
+      app: ms-springboot-gestion
   template:
     metadata:
       labels:
-        app: ms-springboot
+        app: ms-springboot-gestion
     spec:
       containers:
-        - name: ms-springboot
+        - name: ms-springboot-gestion
           # __IMAGE__ lo reemplaza el pipeline de GitHub Actions
           image: __IMAGE__
           imagePullPolicy: Always
@@ -23,9 +23,9 @@ spec:
             - containerPort: 8080
           envFrom:
             - configMapRef:
-                name: ms-springboot-config
+                name: ms-springboot-gestion-config
             - secretRef:
-                name: ms-springboot-secret
+                name: ms-springboot-gestion-secret
           resources:
             requests:
               cpu: 250m

@@ -1,0 +1,19 @@
+# CI/CD de MS3 (ms-springboot-gestion): se dispara solo cuando cambia su carpeta.
+name: CI/CD ms-springboot-gestion
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "microservicios/ms-springboot-gestion/**"
+      - ".github/workflows/ms-springboot-gestion.yml"
+      - ".github/workflows/deploy-microservicio.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-microservicio.yml
+    with:
+      service_name: ms-springboot-gestion
+      service_path: microservicios/ms-springboot-gestion
+    secrets: inherit

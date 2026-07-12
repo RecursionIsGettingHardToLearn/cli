@@ -1,10 +1,19 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ms-springboot-config
+  name: ms-springboot-gestion-config
 data:
   SERVER_PORT: "8080"
   PORT: "8080"
   SPRING_PROFILES_ACTIVE: prod
   # ms-gestion llama a ms-blockchain para registrar recetas controladas
   BLOCKCHAIN_URL: "http://ms-blockchain:3001"
+  BLOCKCHAIN_ENABLED: "true"
+  # MS1 (pacientes) por DNS interno del cluster: resuelve supabase_uid -> pacienteId
+  PACIENTES_URL: "http://ms-ms-pacientes-nextjs:3000"
+  PACIENTES_ENABLED: "true"
+  # Stripe: URLs de retorno (ajustar al dominio real del frontend) y moneda.
+  # Las llaves secretas van en el Secret, NO aqui.
+  STRIPE_SUCCESS_URL: "http://localhost:4200/mis-facturas?pago=exito"
+  STRIPE_CANCEL_URL: "http://localhost:4200/mis-facturas?pago=cancelado"
+  STRIPE_CURRENCY: "usd"

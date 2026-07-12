@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ms-backend
+  name: ms-ms-pacientes-nextjs
 spec:
   selector:
-    app: ms-backend
+    app: ms-ms-pacientes-nextjs
   ports:
     - name: http
       port: 3000

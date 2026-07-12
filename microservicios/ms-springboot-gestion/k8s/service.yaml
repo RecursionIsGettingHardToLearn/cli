@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ms-springboot
+  name: ms-springboot-gestion
 spec:
   selector:
-    app: ms-springboot
+    app: ms-springboot-gestion
   ports:
     - name: http
       port: 8080

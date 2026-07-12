@@ -1,32 +1,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ms-backend
+  name: ms-ms-pacientes-nextjs
   labels:
-    app: ms-backend
+    app: ms-ms-pacientes-nextjs
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ms-backend
+      app: ms-ms-pacientes-nextjs
   template:
     metadata:
       labels:
-        app: ms-backend
+        app: ms-ms-pacientes-nextjs
     spec:
       containers:
-        - name: ms-backend
+        - name: ms-ms-pacientes-nextjs
           # __IMAGE__ lo reemplaza el pipeline de GitHub Actions por
-          # <ACR>.azurecr.io/ms-backend:<sha> en cada despliegue.
+          # <ACR>.azurecr.io/ms-ms-pacientes-nextjs:<sha> en cada despliegue.
           image: __IMAGE__
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
           envFrom:
             - configMapRef:
-                name: ms-backend-config
+                name: ms-ms-pacientes-nextjs-config
             - secretRef:
-                name: ms-backend-secret
+                name: ms-ms-pacientes-nextjs-secret
           resources:
             requests:
               cpu: 100m
