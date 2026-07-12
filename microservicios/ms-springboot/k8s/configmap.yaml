@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ms-springboot-config
+data:
+  SERVER_PORT: "8080"
+  PORT: "8080"
+  SPRING_PROFILES_ACTIVE: prod
+  # ms-gestion llama a ms-blockchain para registrar recetas controladas
+  BLOCKCHAIN_URL: "http://ms-blockchain:3001"

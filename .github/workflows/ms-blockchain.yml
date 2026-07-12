@@ -1,0 +1,19 @@
+# CI/CD de ms-blockchain: se dispara solo cuando cambia su carpeta.
+name: CI/CD ms-blockchain
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "microservicios/ms-blockchain/**"
+      - ".github/workflows/ms-blockchain.yml"
+      - ".github/workflows/deploy-microservicio.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-microservicio.yml
+    with:
+      service_name: ms-blockchain
+      service_path: microservicios/ms-blockchain
+    secrets: inherit

@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.env
+.env.*
+*.md
+Dockerfile
+.dockerignore
+k8s

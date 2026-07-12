@@ -1,42 +1,48 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ms-diagnostico-ia
+  name: ms-backend
   labels:
-    app: ms-diagnostico-ia
+    app: ms-backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ms-diagnostico-ia
+      app: ms-backend
   template:
     metadata:
       labels:
-        app: ms-diagnostico-ia
+        app: ms-backend
     spec:
       containers:
-        - name: ms-diagnostico-ia
+        - name: ms-backend
           # __IMAGE__ lo reemplaza el pipeline de GitHub Actions por
-          # <ACR>.azurecr.io/ms-diagnostico-ia:<sha> en cada despliegue.
+          # <ACR>.azurecr.io/ms-backend:<sha> en cada despliegue.
           image: __IMAGE__
           imagePullPolicy: Always
           ports:
-            - containerPort: 8000
+            - containerPort: 3000
           envFrom:
             - configMapRef:
-                name: ms-diagnostico-ia-config
+                name: ms-backend-config
             - secretRef:
-                name: ms-diagnostico-ia-secret
+                name: ms-backend-secret
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           readinessProbe:
             httpGet:
-              path: /health
-              port: 8000
+              path: /api/health
+              port: 3000
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /health
-              port: 8000
+              path: /api/health
+              port: 3000
             initialDelaySeconds: 20
             periodSeconds: 20
-

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ms-backend-config
+data:
+  NODE_ENV: production
+  PORT: "3000"
+  # Dentro del cluster los servicios se alcanzan por su nombre de Service
+  MS3_URL: "http://ms-springboot:8080/graphql"
+  BLOCKCHAIN_URL: "http://ms-blockchain:3001"
+  # Ajustar con el dominio real del frontend en produccion
+  CORS_ORIGINS: "http://localhost:4200"

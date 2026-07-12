@@ -1,0 +1,19 @@
+# CI/CD de MS2 (ms-diagnostico-ia): se dispara solo cuando cambia su carpeta.
+name: CI/CD ms-diagnostico-ia
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "microservicios/ms-diagnostico-ia/**"
+      - ".github/workflows/ms-diagnostico-ia.yml"
+      - ".github/workflows/deploy-microservicio.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-microservicio.yml
+    with:
+      service_name: ms-diagnostico-ia
+      service_path: microservicios/ms-diagnostico-ia
+    secrets: inherit

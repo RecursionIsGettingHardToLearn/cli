@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ms-blockchain-config
+data:
+  NODE_ENV: production
+  PORT: "3001"
+  # RPC publico de Polygon Amoy (testnet)
+  AMOY_RPC_URL: "https://rpc-amoy.polygon.technology"
+  # Ajustar con el dominio real del frontend en produccion
+  CORS_ORIGINS: "http://localhost:4200"

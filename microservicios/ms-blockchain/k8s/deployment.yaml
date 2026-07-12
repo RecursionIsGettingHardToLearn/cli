@@ -1,42 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ms-diagnostico-ia
+  name: ms-blockchain
   labels:
-    app: ms-diagnostico-ia
+    app: ms-blockchain
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ms-diagnostico-ia
+      app: ms-blockchain
   template:
     metadata:
       labels:
-        app: ms-diagnostico-ia
+        app: ms-blockchain
     spec:
       containers:
-        - name: ms-diagnostico-ia
-          # __IMAGE__ lo reemplaza el pipeline de GitHub Actions por
-          # <ACR>.azurecr.io/ms-diagnostico-ia:<sha> en cada despliegue.
+        - name: ms-blockchain
+          # __IMAGE__ lo reemplaza el pipeline de GitHub Actions
           image: __IMAGE__
           imagePullPolicy: Always
           ports:
-            - containerPort: 8000
+            - containerPort: 3001
           envFrom:
             - configMapRef:
-                name: ms-diagnostico-ia-config
+                name: ms-blockchain-config
             - secretRef:
-                name: ms-diagnostico-ia-secret
+                name: ms-blockchain-secret
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
           readinessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 3001
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
-              port: 8000
+              port: 3001
             initialDelaySeconds: 20
             periodSeconds: 20
-

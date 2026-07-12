@@ -1,0 +1,87 @@
+# ============================================================
+# Workflow REUTILIZABLE: build en Azure Container Registry (ACR)
+# y despliegue en Azure Kubernetes Service (AKS).
+# Lo invocan los 4 workflows de cada microservicio.
+#
+# Secrets requeridos en GitHub (Settings > Secrets > Actions):
+#   AZURE_CREDENTIALS   -> JSON del service principal (az ad sp create-for-rbac --sdk-auth)
+#   ACR_NAME            -> nombre corto del registry (sin .azurecr.io)
+#   AKS_RESOURCE_GROUP  -> resource group del cluster
+#   AKS_CLUSTER_NAME    -> nombre del cluster AKS
+# ============================================================
+name: Desplegar microservicio en AKS
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: "Nombre del microservicio (imagen, deployment y service)"
+        required: true
+        type: string
+      service_path:
+        description: "Ruta del microservicio dentro del repo"
+        required: true
+        type: string
+    secrets:
+      AZURE_CREDENTIALS:
+        required: true
+      ACR_NAME:
+        required: true
+      AKS_RESOURCE_GROUP:
+        required: true
+      AKS_CLUSTER_NAME:
+        required: true
+
+env:
+  K8S_NAMESPACE: clinica
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del codigo
+        uses: actions/checkout@v4
+
+      - name: Iniciar sesion en Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Construir y publicar imagen en ACR
+        run: |
+          TAG="${GITHUB_SHA::8}"
+          IMAGE="${{ secrets.ACR_NAME }}.azurecr.io/${{ inputs.service_name }}:${TAG}"
+          # az acr build compila en la nube: no requiere docker en el runner
+          az acr build \
+            --registry "${{ secrets.ACR_NAME }}" \
+            --image "${{ inputs.service_name }}:${TAG}" \
+            --image "${{ inputs.service_name }}:latest" \
+            --file "${{ inputs.service_path }}/Dockerfile" \
+            "${{ inputs.service_path }}"
+          echo "IMAGE=${IMAGE}" >> "$GITHUB_ENV"
+
+      - name: Conectar con el cluster AKS
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Asegurar que exista el namespace
+        run: |
+          kubectl create namespace "$K8S_NAMESPACE" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Aplicar manifiestos de Kubernetes
+        run: |
+          cd "${{ inputs.service_path }}/k8s"
+          # Inyecta la imagen recien construida en el deployment
+          sed -i "s|__IMAGE__|${IMAGE}|g" deployment.yaml
+          kubectl apply -n "$K8S_NAMESPACE" -f configmap.yaml
+          kubectl apply -n "$K8S_NAMESPACE" -f deployment.yaml
+          kubectl apply -n "$K8S_NAMESPACE" -f service.yaml
+
+      - name: Verificar el despliegue
+        run: |
+          kubectl rollout status "deployment/${{ inputs.service_name }}" \
+            -n "$K8S_NAMESPACE" --timeout=300s
+          kubectl get pods -n "$K8S_NAMESPACE" -l "app=${{ inputs.service_name }}"
