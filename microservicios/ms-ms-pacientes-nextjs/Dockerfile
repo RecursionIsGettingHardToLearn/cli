@@ -30,9 +30,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
-# La salida "standalone" incluye node_modules trazados (Prisma incluido)
+# La salida "standalone" incluye los node_modules trazados por Next.js
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
+# El file-tracing de Next standalone NO siempre incluye el engine nativo de Prisma;
+# lo copiamos explicitamente para evitar PrismaClientInitializationError
+# ("Query engine library not found") en runtime dentro de AKS.
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/@prisma/client ./node_modules/@prisma/client
 # Esquema Prisma disponible en runtime (migrate deploy / introspección)
 COPY --from=build /app/prisma ./prisma
 

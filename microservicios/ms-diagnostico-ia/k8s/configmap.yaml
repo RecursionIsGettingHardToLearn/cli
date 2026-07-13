@@ -15,3 +15,10 @@ data:
   DATABASE_URL: sqlite:////app/data/ms_ia.db
   UPLOAD_DIR: /app/data/uploads
   MAX_UPLOAD_MB: "15"
+  # --- Persistencia durable en AWS (el pod de AKS es efimero). Ver guia §3. ---
+  # Las credenciales AWS (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY) van en el Secret.
+  STORAGE_BACKEND: "dynamodb"
+  AWS_REGION: "sa-east-1"
+  DYNAMODB_TABLE: "ms2_diagnostico_ia"
+  S3_BUCKET: "clinica-ms2-uploads-017013687780"
+  S3_PREFIX: "uploads"

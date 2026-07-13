@@ -13,6 +13,9 @@
 *.key
 *.p12
 *.jks
+# Archivos de credenciales sueltos (Supabase/AWS) y volcados de cuentas
+*.cre
+usuarios_con_credenciales.txt
 
 # -------------------------------------------------------
 # 📦 Node / Next.js / Angular — node_modules y builds

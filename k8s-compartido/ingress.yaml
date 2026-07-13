@@ -1,0 +1,72 @@
+# ============================================================
+# Ingress compartido — expone los microservicios publicamente.
+# ------------------------------------------------------------
+# Se aplica en la FASE 7 (requiere el add-on de routing de AKS,
+# `az aks approuting enable`, que crea un Load Balancer publico
+# CON COSTO). Hasta entonces, probar con `kubectl port-forward`.
+#
+# Ruteo:
+#   /api/*        -> ms-ms-pacientes-nextjs:3000  (BFF; CONSERVA el prefijo /api,
+#                                                   porque MS1 sirve nativamente bajo /api)
+#   /gestion/*    -> ms-springboot-gestion:8080   (se quita /gestion)
+#   /ia/*         -> ms-diagnostico-ia:8000        (se quita /ia)
+#   /blockchain/* -> ms-blockchain:3001            (se quita /blockchain)
+#
+# Nota: si instalas ingress-nginx por Helm en vez del add-on de AKS,
+# cambia ingressClassName a "nginx".
+# ============================================================
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clinica-ingress-api
+  namespace: clinica
+spec:
+  ingressClassName: webapprouting.kubernetes.azure.com
+  rules:
+    - http:
+        paths:
+          # MS1 (Next.js BFF) sirve /api/graphql, /api/health, /api/internal/*
+          # => NO se reescribe el prefijo, el backend espera /api tal cual.
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: ms-ms-pacientes-nextjs
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clinica-ingress-services
+  namespace: clinica
+  annotations:
+    # Reescribe /<prefijo>/<resto> -> /<resto> (captura grupo 2).
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: webapprouting.kubernetes.azure.com
+  rules:
+    - http:
+        paths:
+          - path: /gestion(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ms-springboot-gestion
+                port:
+                  number: 8080
+          - path: /ia(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ms-diagnostico-ia
+                port:
+                  number: 8000
+          - path: /blockchain(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ms-blockchain
+                port:
+                  number: 3001
