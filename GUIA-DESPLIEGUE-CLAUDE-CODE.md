@@ -76,10 +76,10 @@ Pasos:
 > (ver §10). Trátalas como comprometidas.
 
 Checklist §2:
-- [ ] Proyecto Supabase creado y contraseña guardada en un gestor de secretos.
-- [ ] Cadenas pooled (6543) y direct (5432) obtenidas.
-- [ ] `Project URL`, `service_role`, `ISSUER` y `JWKS_URI` anotados.
-- [ ] Migraciones de MS1 aplicadas (`prisma migrate deploy`).
+- [x] Proyecto Supabase creado y contraseña guardada en un gestor de secretos. (2 proyectos: krrfinxcfahnqbjxzebr=pacientes, ogsaciyvcfoanbnxedzm=gestion; AUTH sigue en yiyfwfvxdseamnelgetf porque el frontend loguea ahi)
+- [x] Cadenas pooled (6543) y direct (5432) obtenidas. (pooler: aws-0-ca-central-1.pooler.supabase.com — los proyectos estan en Canada, no us-east-1)
+- [x] `Project URL`, `service_role`, `ISSUER` y `JWKS_URI` anotados.
+- [x] Migraciones de MS1 aplicadas (`prisma migrate deploy`). (verificado: 7 tablas; gestion ya tiene esquema y Flyway hara baseline+V2/V3 idempotentes al arrancar)
 
 ---
 
@@ -175,10 +175,10 @@ En `microservicios/ms-diagnostico-ia/k8s/configmap.yaml`, añade/ajusta:
 Las credenciales AWS van en el **Secret** (no en el ConfigMap): ver §5.
 
 Checklist §3:
-- [ ] Tabla `ms2_diagnostico_ia` creada (pk/sk, PAY_PER_REQUEST).
-- [ ] (Opcional) Bucket S3 creado y bloqueado a acceso público.
-- [ ] Usuario IAM `ms2-diagnostico-ia` con política de mínimo privilegio y claves generadas.
-- [ ] ConfigMap de MS2 con `STORAGE_BACKEND=dynamodb` + región/tabla/bucket.
+- [ ] Tabla `ms2_diagnostico_ia` creada (pk/sk, PAY_PER_REQUEST). — PENDIENTE: requiere admin en consola AWS (region us-east-1)
+- [x] (Opcional) Bucket S3: se reutiliza `clinica-docs-g7-2026` (us-east-1, ya existente y accesible por clinica-ms2-app).
+- [ ] Usuario IAM: se reutiliza `clinica-ms2-app` (ya tiene S3); FALTA adjuntarle politica DynamoDB sobre la tabla — pendiente consola admin.
+- [x] ConfigMap de MS2 con `STORAGE_BACKEND=dynamodb` + región/tabla/bucket. (us-east-1 / ms2_diagnostico_ia / clinica-docs-g7-2026)
 
 ---
 
@@ -218,8 +218,8 @@ gh secret set AKS_CLUSTER_NAME   --repo RecursionIsGettingHardToLearn/cli --body
 ```
 
 Checklist §4:
-- [ ] RG, ACR y AKS creados; `kubectl get nodes` → Ready.
-- [ ] Service principal creado y los 4 secrets cargados en el repo.
+- [x] RG, ACR y AKS creados; `kubectl get nodes` → Ready. (ACR `acrclinica1575802962` en eastus; AKS `aks-clinica` en **northcentralus**, 1 nodo Standard_B2as_v2 — unica combinacion SKU+cuota permitida por la suscripcion Students)
+- [x] Service principal creado y los 4 secrets cargados en el repo. (`sp-clinica-cicd`, Contributor solo en rg-clinica)
 
 ---
 
@@ -269,8 +269,8 @@ kubectl create secret generic ms-diagnostico-ia-secret -n clinica \
 > que carga **ambos** (`envFrom: configMapRef` + `secretRef`); los 4 deployments ya usan ese patrón.
 
 Checklist §5:
-- [ ] Namespace `clinica` creado.
-- [ ] Los 4 secrets creados con valores reales (MS2 incluye claves AWS).
+- [x] Namespace `clinica` creado.
+- [x] Los 4 secrets creados con valores reales (MS2 incluye claves AWS del usuario IAM clinica-ms2-app; GEMINI y STRIPE vacios a proposito).
 
 ---
 

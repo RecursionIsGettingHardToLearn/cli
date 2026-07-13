@@ -18,7 +18,8 @@ data:
   # --- Persistencia durable en AWS (el pod de AKS es efimero). Ver guia §3. ---
   # Las credenciales AWS (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY) van en el Secret.
   STORAGE_BACKEND: "dynamodb"
-  AWS_REGION: "sa-east-1"
+  # Region/bucket REALES de la cuenta AWS 017013687780 (usuario IAM clinica-ms2-app).
+  AWS_REGION: "us-east-1"
   DYNAMODB_TABLE: "ms2_diagnostico_ia"
-  S3_BUCKET: "clinica-ms2-uploads-017013687780"
+  S3_BUCKET: "clinica-docs-g7-2026"
   S3_PREFIX: "uploads"
