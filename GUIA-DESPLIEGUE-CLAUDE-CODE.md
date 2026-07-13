@@ -391,12 +391,12 @@ Alternativa: desplegarlo como 5.º servicio en AKS con nginx (usa `n8n/nginx-fro
 
 ## Checklist de aceptación final
 
-- [ ] `az acr repository list --name $ACR` muestra las 4 imágenes.
-- [ ] Los 4 workflows en verde en Actions.
-- [ ] `kubectl get pods -n clinica`: 4/4 Running con probes en Ready.
-- [ ] Health checks 200 (§7).
-- [ ] MS2 escribe/lee en DynamoDB (y S3 si aplica) sin errores en logs.
-- [ ] Ingress con IP/host público y rutas OK (§8).
-- [ ] Frontend accesible y llamando a la API por el Ingress.
-- [ ] `git log --format='%an <%ae>%n%(trailers)' -5` sin coautores.
-- [ ] PAT rotado y archivo de credenciales purgado del historial (§10).
+- [x] `az acr repository list --name acrclinica1575802962` muestra las 4 imágenes.
+- [x] Los 4 workflows en verde en Actions. (build con docker en el runner: ACR Tasks esta bloqueado en la suscripcion)
+- [x] `kubectl get pods -n clinica`: 4/4 Running con probes en Ready.
+- [x] Health checks 200 (§7). (via port-forward y via ingress)
+- [ ] MS2 escribe/lee en DynamoDB — PENDIENTE: falta ejecutar en consola AWS admin el bloque que crea la tabla `ms2_diagnostico_ia` y adjunta la politica a `clinica-ms2-app`.
+- [x] Ingress con IP público y rutas OK (§8): http://20.88.0.83 → /api, /gestion, /ia, /blockchain (las 4 responden 200).
+- [ ] Frontend accesible y llamando a la API por el Ingress. (§9 pendiente; falta ademas restringir CORS_ORIGINS al dominio final)
+- [x] `git log --format='%an <%ae>%n%(trailers)' -5` sin coautores.
+- [x] Archivo de credenciales purgado del historial (git filter-repo + push --force; backup espejo local). PENDIENTE del usuario: revocar el PAT viejo en GitHub → Settings → Developer settings (el remote ya no lo usa; quedo expuesto en la URL del remote).
