@@ -15,11 +15,18 @@ class Settings(BaseSettings):
     gemini_image_model: str = "gemini-2.0-flash"
     gemini_fallback_models: str = "gemini-2.5-flash,gemini-2.5-flash-lite"
 
-    # OpenAI: usado por el modulo de REPORTES CON IA POR VOZ.
-    # Whisper transcribe el audio y un modelo de chat arma el plan del reporte.
+    # OpenAI: reportes por voz (Whisper + chat) Y TAMBIEN pre-triaje y analisis
+    # de imagen (vision), como alternativa a Gemini.
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
     openai_transcribe_model: str = "whisper-1"
+    # Modelo multimodal para /api/analizar-imagen. gpt-4o-mini soporta vision.
+    openai_vision_model: str = "gpt-4o-mini"
+
+    # Orden de intento de proveedores. El primero con clave configurada manda;
+    # si falla, se prueba el siguiente y al final quedan las reglas locales.
+    # Solo con OpenAI: dejar GEMINI_API_KEY vacia (o poner IA_PROVIDER_ORDER=openai).
+    ia_provider_order: str = "gemini,openai"
 
     database_url: str = "sqlite:///./data/ms_ia.db"
     upload_dir: str = "./data/uploads"
@@ -39,6 +46,12 @@ class Settings(BaseSettings):
     @property
     def upload_path(self) -> Path:
         return Path(self.upload_dir)
+
+    @property
+    def ia_provider_list(self) -> list[str]:
+        validos = {"gemini", "openai"}
+        orden = [p.strip().lower() for p in self.ia_provider_order.split(",") if p.strip()]
+        return [p for p in dict.fromkeys(orden) if p in validos]
 
     @property
     def gemini_text_models(self) -> list[str]:

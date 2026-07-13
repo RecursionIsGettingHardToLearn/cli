@@ -1,76 +1,48 @@
-import json
-from pathlib import Path
+"""Proveedor Gemini. Usa los prompts/normalizadores compartidos de ia_common,
+por lo que su salida es identica a la de OpenAI (solo cambia "proveedor").
 
-from google import genai
-from google.genai import types
+El SDK de Google se importa de forma PEREZOSA: si el paquete no esta instalado o
+no hay clave, el servicio arranca igual y degrada al siguiente proveedor.
+"""
+from pathlib import Path
 
 from app.config import Settings
 from app.schemas import ChatTriajeResponse
+from app.services.ia_common import (
+    IMAGE_SYSTEM_PROMPT,
+    TRIAGE_SYSTEM_PROMPT,
+    build_image_result,
+    build_triage_response,
+    json_from_text,
+)
 
 
-TRIAGE_SYSTEM_PROMPT = """
-Eres un asistente de pre-triaje clinico para una app educativa.
-No diagnostiques de forma definitiva. Si el paciente da poco contexto, pide datos concretos
-en la respuesta: sintoma principal, duracion, intensidad, edad aproximada y signos de alarma.
-Devuelve orientacion, especialidad sugerida, urgencia y signos de alarma. Responde solo JSON valido con estas claves:
-respuesta, especialidad, urgencia, agendar, confianza, signos_alarma, recomendaciones.
-urgencia debe ser BAJA, MEDIA o ALTA.
-especialidad debe ser una etiqueta corta en MAYUSCULAS.
-"""
 
 
-IMAGE_SYSTEM_PROMPT = """
-Analiza la imagen clinica o documento medico de forma prudente para apoyar al medico.
-Puedes recibir radiografias, fotos de lesiones, heridas, documentos clinicos, recetas,
-informes o imagenes no medicas. Identifica el tipo de imagen y describe hallazgos visibles.
-Si la imagen no es medica, dilo claramente. Si es una radiografia o lesion, sugiere posibles
-hallazgos solo como apoyo, nunca como diagnostico definitivo. Recomienda confirmacion por
-profesional y pruebas complementarias cuando corresponda.
-Responde solo JSON valido con:
-tipo_imagen, hallazgos, urgencia, recomendacion, confianza, nota_seguridad.
-hallazgos debe ser SIEMPRE un arreglo de strings.
-urgencia debe ser BAJA, MEDIA o ALTA.
-"""
-
-
-def _client(settings: Settings) -> genai.Client | None:
+def _client(settings: Settings):
     if not settings.gemini_api_key:
+        return None
+    try:
+        from google import genai
+    except Exception:
         return None
     return genai.Client(api_key=settings.gemini_api_key)
 
 
-def _json_from_text(text: str) -> dict:
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.strip("`")
-        cleaned = cleaned.removeprefix("json").strip()
-    return json.loads(cleaned)
 
 
-def _safe_float(value: object, default: float = 0.7) -> float:
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
 
 
-def _safe_urgency(value: object) -> str:
-    urgency = str(value or "MEDIA").upper()
-    return urgency if urgency in {"BAJA", "MEDIA", "ALTA"} else "MEDIA"
 
 
-def _safe_string_list(value: object) -> list[str]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return [str(item) for item in value]
-    return [str(value)]
 
 
 async def gemini_triage(settings: Settings, message: str, history: list[dict[str, str]]) -> ChatTriajeResponse | None:
     client = _client(settings)
     if client is None:
         return None
+
+    from google.genai import types
 
     history_text = "\n".join(f"{item.get('rol', 'user')}: {item.get('texto', '')}" for item in history[-8:])
     prompt = f"{TRIAGE_SYSTEM_PROMPT}\nHistorial:\n{history_text}\nMensaje actual:\n{message}"
@@ -88,23 +60,16 @@ async def gemini_triage(settings: Settings, message: str, history: list[dict[str
             last_error = exc
     if response is None:
         raise last_error or RuntimeError("Gemini no devolvio respuesta")
-    data = _json_from_text(response.text or "{}")
-    return ChatTriajeResponse(
-        respuesta=str(data.get("respuesta", "")),
-        especialidad=str(data.get("especialidad", "MEDICINA_GENERAL")),
-        urgencia=_safe_urgency(data.get("urgencia")),
-        agendar=bool(data.get("agendar", True)),
-        confianza=_safe_float(data.get("confianza"), 0.7),
-        proveedor="gemini",
-        signos_alarma=_safe_string_list(data.get("signos_alarma")),
-        recomendaciones=_safe_string_list(data.get("recomendaciones")),
-    )
+    data = json_from_text(response.text or "{}")
+    return build_triage_response(data, proveedor="gemini")
 
 
 async def gemini_image_analysis(settings: Settings, file_path: Path, mime_type: str | None, descripcion: str | None) -> dict | None:
     client = _client(settings)
     if client is None:
         return None
+
+    from google.genai import types
 
     image_bytes = file_path.read_bytes()
     prompt = IMAGE_SYSTEM_PROMPT
@@ -128,15 +93,5 @@ async def gemini_image_analysis(settings: Settings, file_path: Path, mime_type: 
             last_error = exc
     if response is None:
         raise last_error or RuntimeError("Gemini no devolvio respuesta")
-    data = _json_from_text(response.text or "{}")
-    return {
-        "proveedor": "gemini",
-        "tipo_imagen": str(data.get("tipo_imagen", "imagen_clinica")),
-        "hallazgos": _safe_string_list(data.get("hallazgos")),
-        "urgencia": _safe_urgency(data.get("urgencia")),
-        "recomendacion": str(data.get("recomendacion", "Revisar con un profesional de salud.")),
-        "confianza": _safe_float(data.get("confianza"), 0.7),
-        "nota_seguridad": str(
-            data.get("nota_seguridad", "Resultado informativo. No reemplaza evaluacion medica.")
-        ),
-    }
+    data = json_from_text(response.text or "{}")
+    return build_image_result(data, proveedor="gemini")

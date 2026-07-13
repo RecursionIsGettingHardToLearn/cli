@@ -18,9 +18,14 @@ from app.schemas import (
     RevisionResultadoRequest,
     ResultadoResponse,
 )
-from app.services.gemini import gemini_image_analysis, gemini_triage
 from app.services.openai_reportes import generar_plan_reporte, transcribir_audio
-from app.services.rules import fallback_image_analysis, rule_based_triage
+# Alias con prefijo ia_: el endpoint de abajo se llama analizar_imagen y taparia
+# a la funcion importada (el endpoint se llamaria a si mismo).
+from app.services.providers import (
+    analizar_imagen as ia_analizar_imagen,
+    analizar_triaje as ia_analizar_triaje,
+    proveedor_activo,
+)
 from app.services.storage import (
     DocumentoRecord,
     ResultadoRecord,
@@ -94,6 +99,10 @@ def health(settings: Settings = Depends(get_settings)) -> dict:
         "environment": settings.environment,
         "gemini": "configured" if settings.gemini_api_key else "fallback",
         "openai": "configured" if settings.openai_api_key else "fallback",
+        # Proveedor que atendera el triaje y el analisis de imagen ahora mismo.
+        # Si dice "reglas-locales" es que NINGUNA clave esta configurada.
+        "proveedor_activo": proveedor_activo(settings),
+        "orden_proveedores": settings.ia_provider_list,
     }
 
 
@@ -103,13 +112,7 @@ async def chat_triaje(
     db: Session = Depends(get_db),
     settings: Settings = Depends(get_settings),
 ) -> ChatTriajeResponse:
-    try:
-        result = await gemini_triage(settings, payload.mensaje, payload.historial)
-    except Exception:
-        result = None
-
-    if result is None:
-        result = rule_based_triage(payload.mensaje)
+    result = await ia_analizar_triaje(settings, payload.mensaje, payload.historial)
 
     save_result(
         db,
@@ -246,13 +249,9 @@ async def analizar_imagen(
     if not path.exists():
         path = settings.upload_path / doc.ruta.split("/")[-1]
 
-    try:
-        analysis = await gemini_image_analysis(settings, path, doc.content_type, descripcion)
-    except Exception:
-        analysis = None
-
-    if analysis is None:
-        analysis = fallback_image_analysis(doc.nombre_original, doc.content_type)
+    analysis = await ia_analizar_imagen(
+        settings, path, doc.content_type, descripcion, doc.nombre_original
+    )
 
     row = save_result(
         db,
