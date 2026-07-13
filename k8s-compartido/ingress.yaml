@@ -35,6 +35,15 @@ spec:
                 name: ms-ms-pacientes-nextjs
                 port:
                   number: 3000
+          # Frontend Angular (SPA) en la raiz: nginx hace fallback a index.html.
+          # Los prefijos mas largos (/api, /gestion, /ia, /blockchain) ganan.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-web
+                port:
+                  number: 80
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

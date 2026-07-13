@@ -1,0 +1,19 @@
+# CI/CD del frontend Angular: se dispara solo cuando cambia su carpeta.
+name: CI/CD frontend-web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-web.yml"
+      - ".github/workflows/deploy-microservicio.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-microservicio.yml
+    with:
+      service_name: frontend-web
+      service_path: frontend
+    secrets: inherit

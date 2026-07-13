@@ -7,12 +7,11 @@
  */
 export const environment = {
   production: true,
-  graphqlUrl: 'https://rr-rho-jade.vercel.app/api/graphql',
-  ms2Url: 'https://ms-diagnostico-ia.onrender.com',
-  // ms-blockchain desplegado en Azure App Service (verificado: /health y
-  // /recetas/gas responden OK con JWT de Supabase y CORS para Vercel).
-  // En Vercel esto se sobreescribe con la env var BLOCKCHAIN_URL (ver set-env.js).
-  blockchainUrl: 'https://ms-blockchain-recetas.azurewebsites.net',
+  // AKS: el frontend se sirve desde el MISMO ingress que las APIs
+  // (rutas relativas al mismo origen => sin CORS).
+  graphqlUrl: '/api/graphql',
+  ms2Url: '/ia',
+  blockchainUrl: '/blockchain',
   supabase: {
     url: 'https://yiyfwfvxdseamnelgetf.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeWZ3ZnZ4ZHNlYW1uZWxnZXRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NTU4MzAsImV4cCI6MjA5NTUzMTgzMH0.oD57Pm5qYafxeB5a9u_z6IW7V7fVypD5gmkUfsmikLg'

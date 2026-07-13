@@ -1,0 +1,9 @@
+# El frontend es estatico (las URLs de API se hornean en build time via
+# environment.prod.ts), pero el pipeline aplica siempre configmap.yaml:
+# este existe como marcador para mantener el contrato del workflow.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-web-config
+data:
+  SERVICE: frontend-web
