@@ -6,6 +6,10 @@ metadata:
     app: ms-blockchain
 spec:
   replicas: 1
+  # Nodo unico con CPU al limite: Recreate evita el pod extra (surge) del
+  # RollingUpdate, que no cabe y deja el deploy colgado en Pending.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: ms-blockchain
