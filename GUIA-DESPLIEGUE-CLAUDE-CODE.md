@@ -175,9 +175,9 @@ En `microservicios/ms-diagnostico-ia/k8s/configmap.yaml`, añade/ajusta:
 Las credenciales AWS van en el **Secret** (no en el ConfigMap): ver §5.
 
 Checklist §3:
-- [ ] Tabla `ms2_diagnostico_ia` creada (pk/sk, PAY_PER_REQUEST). — PENDIENTE: requiere admin en consola AWS (region us-east-1)
+- [x] Tabla `ms2_diagnostico_ia` creada (pk/sk, PAY_PER_REQUEST, us-east-1) — via CloudShell con la cuenta admin.
 - [x] (Opcional) Bucket S3: se reutiliza `clinica-docs-g7-2026` (us-east-1, ya existente y accesible por clinica-ms2-app).
-- [ ] Usuario IAM: se reutiliza `clinica-ms2-app` (ya tiene S3); FALTA adjuntarle politica DynamoDB sobre la tabla — pendiente consola admin.
+- [x] Usuario IAM: se reutiliza `clinica-ms2-app` con politica inline `ms2-ddb` de minimo privilegio sobre la tabla (CRUD verificado: GetItem/PutItem/DeleteItem OK).
 - [x] ConfigMap de MS2 con `STORAGE_BACKEND=dynamodb` + región/tabla/bucket. (us-east-1 / ms2_diagnostico_ia / clinica-docs-g7-2026)
 
 ---
@@ -395,8 +395,8 @@ Alternativa: desplegarlo como 5.º servicio en AKS con nginx (usa `n8n/nginx-fro
 - [x] Los 4 workflows en verde en Actions. (build con docker en el runner: ACR Tasks esta bloqueado en la suscripcion)
 - [x] `kubectl get pods -n clinica`: 4/4 Running con probes en Ready.
 - [x] Health checks 200 (§7). (via port-forward y via ingress)
-- [ ] MS2 escribe/lee en DynamoDB — PENDIENTE: falta ejecutar en consola AWS admin el bloque que crea la tabla `ms2_diagnostico_ia` y adjunta la politica a `clinica-ms2-app`.
+- [x] MS2 escribe/lee en DynamoDB: tabla creada + politica aplicada; CRUD verificado con las credenciales del pod.
 - [x] Ingress con IP público y rutas OK (§8): http://20.88.0.83 → /api, /gestion, /ia, /blockchain (las 4 responden 200).
-- [ ] Frontend accesible y llamando a la API por el Ingress. (§9 pendiente; falta ademas restringir CORS_ORIGINS al dominio final)
+- [x] Frontend accesible y llamando a la API por el Ingress: `frontend-web` (Angular+nginx) servido en `/` con URLs relativas (sin CORS). /login responde 200.
 - [x] `git log --format='%an <%ae>%n%(trailers)' -5` sin coautores.
 - [x] Archivo de credenciales purgado del historial (git filter-repo + push --force; backup espejo local). PENDIENTE del usuario: revocar el PAT viejo en GitHub → Settings → Developer settings (el remote ya no lo usa; quedo expuesto en la URL del remote).
