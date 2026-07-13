@@ -50,14 +50,19 @@ jobs:
       - name: Construir y publicar imagen en ACR
         run: |
           TAG="${GITHUB_SHA::8}"
-          IMAGE="${{ secrets.ACR_NAME }}.azurecr.io/${{ inputs.service_name }}:${TAG}"
-          # az acr build compila en la nube: no requiere docker en el runner
-          az acr build \
-            --registry "${{ secrets.ACR_NAME }}" \
-            --image "${{ inputs.service_name }}:${TAG}" \
-            --image "${{ inputs.service_name }}:latest" \
-            --file "${{ inputs.service_path }}/Dockerfile" \
+          REGISTRY="${{ secrets.ACR_NAME }}.azurecr.io"
+          IMAGE="${REGISTRY}/${{ inputs.service_name }}:${TAG}"
+          # La suscripcion (Azure for Students) no permite ACR Tasks
+          # (TasksOperationsNotAllowed), asi que se construye con Docker
+          # en el runner y se publica con docker push.
+          az acr login --name "${{ secrets.ACR_NAME }}"
+          docker build \
+            -t "${IMAGE}" \
+            -t "${REGISTRY}/${{ inputs.service_name }}:latest" \
+            -f "${{ inputs.service_path }}/Dockerfile" \
             "${{ inputs.service_path }}"
+          docker push "${IMAGE}"
+          docker push "${REGISTRY}/${{ inputs.service_name }}:latest"
           echo "IMAGE=${IMAGE}" >> "$GITHUB_ENV"
 
       - name: Conectar con el cluster AKS
