@@ -2,7 +2,8 @@
 --  Vista adicional para el Dashboard de BI: Blockchain
 -- =====================================================
 
-CREATE OR REPLACE VIEW vw_recetas_blockchain AS
+DROP VIEW IF EXISTS vw_recetas_blockchain;
+CREATE VIEW vw_recetas_blockchain AS
 SELECT 
     DATE_TRUNC('month', r.fecha_emision)::DATE AS mes,
     COUNT(r.id) AS total_recetas,

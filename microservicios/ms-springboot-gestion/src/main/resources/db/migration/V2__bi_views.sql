@@ -3,7 +3,8 @@
 -- =====================================================
 
 -- 1) Inventario Critico
-CREATE OR REPLACE VIEW vw_inventario_critico AS
+DROP VIEW IF EXISTS vw_inventario_critico;
+CREATE VIEW vw_inventario_critico AS
 SELECT 
     m.id AS medicamento_id,
     m.nombre AS medicamento,
@@ -21,7 +22,8 @@ GROUP BY m.id, m.nombre, m.stock_minimo;
 
 
 -- 2) Ventas Diarias
-CREATE OR REPLACE VIEW vw_ventas_diarias AS
+DROP VIEW IF EXISTS vw_ventas_diarias;
+CREATE VIEW vw_ventas_diarias AS
 SELECT 
     DATE(f.fecha) AS dia,
     COUNT(f.id) AS num_facturas,
@@ -36,7 +38,8 @@ GROUP BY DATE(f.fecha);
 
 
 -- 3) Top Medicamentos
-CREATE OR REPLACE VIEW vw_top_medicamentos AS
+DROP VIEW IF EXISTS vw_top_medicamentos;
+CREATE VIEW vw_top_medicamentos AS
 SELECT 
     m.id AS medicamento_id,
     m.nombre AS medicamento,
