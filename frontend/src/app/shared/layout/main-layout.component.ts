@@ -2,11 +2,12 @@ import { Component, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from './sidebar.component';
+import { ChatbotComponent } from '../chatbot/chatbot.component';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SidebarComponent],
+  imports: [CommonModule, RouterOutlet, SidebarComponent, ChatbotComponent],
   template: `
     <div class="app-shell"
          [class.sidebar-collapsed]="collapsed()"
@@ -30,6 +31,8 @@ import { SidebarComponent } from './sidebar.component';
           <router-outlet></router-outlet>
         </main>
       </div>
+
+      <app-chatbot></app-chatbot>
     </div>
   `,
   styles: [`

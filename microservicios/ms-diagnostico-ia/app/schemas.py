@@ -83,3 +83,25 @@ class IndicadoresIaResponse(BaseModel):
     confirmados: int
     descartados: int
     urgencias_altas: int
+
+
+class RutaApp(BaseModel):
+    """Una ruta del frontend Angular, tal como la manda el widget del chatbot."""
+    path: str = Field(min_length=1, max_length=100)
+    titulo: str = Field(min_length=1, max_length=100)
+    descripcion: str = Field(default="", max_length=300)
+
+
+class ChatAsistenteRequest(BaseModel):
+    mensaje: str = Field(min_length=1, max_length=2000)
+    historial: list[dict[str, str]] = []
+    rol_usuario: str | None = None
+    # Catalogo YA filtrado por el rol del usuario (lo arma el frontend, que es
+    # quien conoce sus rutas). El backend valida navegar_a contra esta lista.
+    rutas: list[RutaApp] = []
+
+
+class ChatAsistenteResponse(BaseModel):
+    respuesta: str
+    navegar_a: str | None = None
+    proveedor: str

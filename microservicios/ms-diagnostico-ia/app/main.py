@@ -9,6 +9,8 @@ from app.config import Settings, get_settings
 from app.db import get_db, init_db
 from app.models import DocumentoClinico, ResultadoIa
 from app.schemas import (
+    ChatAsistenteRequest,
+    ChatAsistenteResponse,
     ChatTriajeRequest,
     ChatTriajeResponse,
     DocumentoResponse,
@@ -18,6 +20,7 @@ from app.schemas import (
     RevisionResultadoRequest,
     ResultadoResponse,
 )
+from app.services.openai_nav import asistir_navegacion
 from app.services.openai_reportes import generar_plan_reporte, transcribir_audio
 # Alias con prefijo ia_: el endpoint de abajo se llama analizar_imagen y taparia
 # a la funcion importada (el endpoint se llamaria a si mismo).
@@ -125,6 +128,20 @@ async def chat_triaje(
         estado_revision="NO_APLICA",
     )
     return result
+
+
+@app.post("/api/chat-asistente", response_model=ChatAsistenteResponse)
+async def chat_asistente(
+    payload: ChatAsistenteRequest,
+    settings: Settings = Depends(get_settings),
+) -> ChatAsistenteResponse:
+    """Chatbot del frontend: navegacion guiada por rutas + chat general.
+
+    Stateless a proposito: no persiste conversaciones (a diferencia del
+    pre-triaje, que si guarda porque es dato clinico). El catalogo de rutas
+    viene del frontend ya filtrado por rol y navegar_a se valida contra el.
+    """
+    return await asistir_navegacion(settings, payload)
 
 
 @app.post("/api/reporte-ia", response_model=ReporteIaResponse)
