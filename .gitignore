@@ -16,6 +16,8 @@
 # Archivos de credenciales sueltos (Supabase/AWS) y volcados de cuentas
 *.cre
 usuarios_con_credenciales.txt
+# Documentacion local con detalles de conexion/facturacion — NUNCA subir
+/local/
 
 # -------------------------------------------------------
 # 📦 Node / Next.js / Angular — node_modules y builds

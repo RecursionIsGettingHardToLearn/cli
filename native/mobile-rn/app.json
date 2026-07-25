@@ -88,9 +88,9 @@
     "extra": {
       "supabaseUrl": "https://yiyfwfvxdseamnelgetf.supabase.co",
       "supabaseAnonKey": "sb_publishable_m3dGlmk_nlhi5KCETDRxQw_Ce1nYuET",
-      "graphqlUrl": "https://rr-rho-jade.vercel.app/api/graphql",
-      "blockchainUrl": "https://ms-blockchain-recetas.azurewebsites.net",
-      "diagnosticosUrl": "https://ms-diagnostico-ia.onrender.com",
+      "graphqlUrl": "http://20.25.229.19/api/graphql",
+      "blockchainUrl": "http://20.25.229.19/blockchain",
+      "diagnosticosUrl": "http://20.25.229.19/ia",
       "amoyRpcUrl": "https://rpc-amoy.polygon.technology",
       "blockchainContractAddress": "0xBa43Cc53c22851505179e0163A24E77681374805",
       "blockchainChainId": 80002,
