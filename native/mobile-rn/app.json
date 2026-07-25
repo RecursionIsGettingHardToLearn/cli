@@ -96,9 +96,9 @@
     "extra": {
       "supabaseUrl": "https://yiyfwfvxdseamnelgetf.supabase.co",
       "supabaseAnonKey": "sb_publishable_m3dGlmk_nlhi5KCETDRxQw_Ce1nYuET",
-      "graphqlUrl": "http://20.25.229.19/api/graphql",
-      "blockchainUrl": "http://20.25.229.19/blockchain",
-      "diagnosticosUrl": "http://20.25.229.19/ia",
+      "graphqlUrl": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/api/graphql",
+      "blockchainUrl": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/blockchain",
+      "diagnosticosUrl": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/ia",
       "amoyRpcUrl": "https://rpc-amoy.polygon.technology",
       "blockchainContractAddress": "0xBa43Cc53c22851505179e0163A24E77681374805",
       "blockchainChainId": 80002,

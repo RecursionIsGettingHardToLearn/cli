@@ -1,19 +1,19 @@
 # ============================================================
 # Ingress compartido — expone los microservicios publicamente.
 # ------------------------------------------------------------
-# Se aplica en la FASE 7 (requiere el add-on de routing de AKS,
-# `az aks approuting enable`, que crea un Load Balancer publico
-# CON COSTO). Hasta entonces, probar con `kubectl port-forward`.
+# HTTPS: cert-manager + Let's Encrypt emiten el cert para el host
+#   clinica-937b0859.northcentralus.cloudapp.azure.com  (secret clinica-tls).
+# Cada Ingress tiene 2 reglas con los MISMOS paths:
+#   - con host=FQDN  -> nginx sirve el cert valido (HTTPS con candado).
+#   - sin host       -> catch-all para el acceso por IP (http://<IP>, y el APK movil).
+# ssl-redirect=false: no forzamos https, para no romper el HTTP por IP ni el movil.
 #
 # Ruteo:
-#   /api/*        -> ms-ms-pacientes-nextjs:3000  (BFF; CONSERVA el prefijo /api,
-#                                                   porque MS1 sirve nativamente bajo /api)
-#   /gestion/*    -> ms-springboot-gestion:8080   (se quita /gestion)
-#   /ia/*         -> ms-diagnostico-ia:8000        (se quita /ia)
-#   /blockchain/* -> ms-blockchain:3001            (se quita /blockchain)
-#
-# Nota: si instalas ingress-nginx por Helm en vez del add-on de AKS,
-# cambia ingressClassName a "nginx".
+#   /api/*        -> ms-ms-pacientes-nextjs:3000  (BFF; conserva /api)
+#   / (raiz)      -> frontend-web:80               (SPA Angular)
+#   /gestion/*    -> ms-springboot-gestion:8080    (se quita /gestion)
+#   /ia/*         -> ms-diagnostico-ia:8000         (se quita /ia)
+#   /blockchain/* -> ms-blockchain:3001             (se quita /blockchain)
 # ============================================================
 ---
 apiVersion: networking.k8s.io/v1
@@ -21,13 +21,19 @@ kind: Ingress
 metadata:
   name: clinica-ingress-api
   namespace: clinica
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: webapprouting.kubernetes.azure.com
+  tls:
+    - hosts:
+        - clinica-937b0859.northcentralus.cloudapp.azure.com
+      secretName: clinica-tls
   rules:
-    - http:
+    - host: clinica-937b0859.northcentralus.cloudapp.azure.com
+      http:
         paths:
-          # MS1 (Next.js BFF) sirve /api/graphql, /api/health, /api/internal/*
-          # => NO se reescribe el prefijo, el backend espera /api tal cual.
           - path: /api
             pathType: Prefix
             backend:
@@ -35,8 +41,22 @@ spec:
                 name: ms-ms-pacientes-nextjs
                 port:
                   number: 3000
-          # Frontend Angular (SPA) en la raiz: nginx hace fallback a index.html.
-          # Los prefijos mas largos (/api, /gestion, /ia, /blockchain) ganan.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-web
+                port:
+                  number: 80
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: ms-ms-pacientes-nextjs
+                port:
+                  number: 3000
           - path: /
             pathType: Prefix
             backend:
@@ -51,11 +71,39 @@ metadata:
   name: clinica-ingress-services
   namespace: clinica
   annotations:
-    # Reescribe /<prefijo>/<resto> -> /<resto> (captura grupo 2).
     nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: webapprouting.kubernetes.azure.com
+  tls:
+    - hosts:
+        - clinica-937b0859.northcentralus.cloudapp.azure.com
+      secretName: clinica-tls
   rules:
+    - host: clinica-937b0859.northcentralus.cloudapp.azure.com
+      http:
+        paths:
+          - path: /gestion(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ms-springboot-gestion
+                port:
+                  number: 8080
+          - path: /ia(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ms-diagnostico-ia
+                port:
+                  number: 8000
+          - path: /blockchain(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: ms-blockchain
+                port:
+                  number: 3001
     - http:
         paths:
           - path: /gestion(/|$)(.*)
