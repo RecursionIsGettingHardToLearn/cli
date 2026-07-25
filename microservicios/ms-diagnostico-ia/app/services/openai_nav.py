@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import unicodedata
 
 from app.config import Settings
@@ -46,8 +47,9 @@ def _normalizar(texto: str) -> str:
 def _catalogo_texto(rutas: list[RutaApp]) -> str:
     lineas = []
     for r in rutas:
+        icono = f" (icono {r.icono})" if r.icono else ""
         desc = f" - {r.descripcion}" if r.descripcion else ""
-        lineas.append(f"- {r.path} | {r.titulo}{desc}")
+        lineas.append(f"- {r.path} | item del menu: '{r.titulo}'{icono}{desc}")
     return "\n".join(lineas) if lineas else "(sin rutas disponibles)"
 
 
@@ -60,15 +62,29 @@ def _system_prompt(rol: str | None, rutas: list[RutaApp]) -> str:
         f"El usuario tiene el rol: {rol or 'desconocido'}. "
         "Estas son las UNICAS secciones a las que puede acceder:\n"
         f"{_catalogo_texto(rutas)}\n\n"
+        "COMO ES LA INTERFAZ (para que puedas guiar):\n"
+        "- A la izquierda hay un menu lateral (sidebar) verde con los items de arriba, "
+        "cada uno con su icono y nombre.\n"
+        "- En pantallas pequenas el menu esta oculto: se abre con el boton de tres "
+        "lineas (hamburguesa) arriba a la izquierda.\n"
+        "- Cuando tu respuesta incluye navegar_a, el chat muestra un boton 'Ir a...' "
+        "en el que el usuario puede hacer clic, y al llegar se resalta el item del menu.\n\n"
         "REGLAS ESTRICTAS:\n"
         "1. Responde SIEMPRE en espanol, en 1 a 3 frases, tono amable y directo.\n"
         '2. Devuelve UNICAMENTE un JSON valido con esta forma exacta: '
-        '{"respuesta": "texto para el usuario", "navegar_a": "/ruta-exacta" }. '
-        'Si no corresponde navegar, usa null en "navegar_a".\n'
-        "3. Usa navegar_a SOLO si el usuario pide ir, abrir, ver o buscar una seccion, "
-        "y SOLO con un path que aparezca literalmente en la lista de arriba.\n"
-        "4. Nunca inventes rutas ni menciones secciones que no esten en la lista.\n"
-        "5. No des diagnosticos ni consejos medicos: si preguntan por sintomas o salud, "
+        '{"respuesta": "texto para el usuario", "navegar_a": "/ruta-exacta", '
+        '"guia": ["paso 1", "paso 2"]}. '
+        'Si no corresponde navegar, usa null en "navegar_a". Si no corresponde guiar, '
+        'usa [] en "guia".\n'
+        "3. Usa navegar_a cuando el usuario quiera ir, abrir, ver o encontrar una "
+        "seccion, SOLO con un path que aparezca literalmente en la lista de arriba.\n"
+        "4. Llena guia (2 o 3 pasos, cortos) cuando el usuario este perdido o pregunte "
+        "COMO llegar, DONDE esta algo o diga que no encuentra una seccion: los pasos "
+        "explican el camino manual por el menu lateral citando el nombre EXACTO del "
+        "item y mencionando el boton hamburguesa si aplica. En ese caso incluye "
+        "TAMBIEN navegar_a para ofrecer el atajo con boton.\n"
+        "5. Nunca inventes rutas ni menciones secciones que no esten en la lista.\n"
+        "6. No des diagnosticos ni consejos medicos: si preguntan por sintomas o salud, "
         "orienta a la seccion de Pre-triaje o Citas cuando esten en su lista.\n"
     )
 
@@ -119,13 +135,21 @@ async def _asistir_openai(
     if navegar_a not in paths_validos:
         navegar_a = None  # el modelo alucino o devolvio basura: se descarta
 
-    return ChatAsistenteResponse(respuesta=respuesta, navegar_a=navegar_a, proveedor="openai")
+    guia_cruda = data.get("guia") or []
+    guia = [str(p).strip()[:200] for p in guia_cruda if str(p).strip()][:4] \
+        if isinstance(guia_cruda, list) else []
+
+    return ChatAsistenteResponse(
+        respuesta=respuesta, navegar_a=navegar_a, guia=guia, proveedor="openai"
+    )
 
 
 def _asistir_reglas(payload: ChatAsistenteRequest) -> ChatAsistenteResponse:
     """Fallback sin IA: matching de keywords contra titulo/descripcion/path."""
     consulta = _normalizar(payload.mensaje)
-    palabras = {p for p in consulta.replace("/", " ").split() if len(p) >= 3}
+    # \w+ sobre el texto ya normalizado: fuera comas, signos y barras, que si no
+    # "reportes," no matchea contra "reportes".
+    palabras = {p for p in re.findall(r"[a-z0-9]+", consulta) if len(p) >= 3}
 
     mejor: RutaApp | None = None
     mejor_puntaje = 0
@@ -139,11 +163,26 @@ def _asistir_reglas(payload: ChatAsistenteRequest) -> ChatAsistenteResponse:
         v in consulta for v in ("ir", "lleva", "llevame", "abre", "abrir", "muestra",
                                 "mostrar", "ver", "donde", "entrar", "navega", "busco")
     )
+    quiere_guia = any(
+        v in consulta for v in ("como llego", "como voy", "como entro", "donde esta",
+                                "donde queda", "no encuentro", "no se llegar", "guia",
+                                "perdido", "perdida", "como accedo")
+    )
 
-    if mejor and (quiere_navegar or mejor_puntaje >= 2):
+    if mejor and (quiere_navegar or quiere_guia or mejor_puntaje >= 2):
+        guia: list[str] = []
+        if quiere_guia:
+            icono = f" (icono {mejor.icono})" if mejor.icono else ""
+            guia = [
+                "Abre el menu lateral; en pantallas pequenas usa el boton de tres "
+                "lineas arriba a la izquierda.",
+                f"Busca el item '{mejor.titulo}'{icono} y haz clic.",
+                "O usa el boton 'Ir a...' aqui abajo para llegar directo.",
+            ]
         return ChatAsistenteResponse(
             respuesta=f"Te llevo a {mejor.titulo}. {mejor.descripcion}".strip(),
             navegar_a=mejor.path,
+            guia=guia,
             proveedor="reglas-locales",
         )
 

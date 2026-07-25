@@ -90,6 +90,9 @@ class RutaApp(BaseModel):
     path: str = Field(min_length=1, max_length=100)
     titulo: str = Field(min_length=1, max_length=100)
     descripcion: str = Field(default="", max_length=300)
+    # Icono primeicons del item del sidebar (ej. "pi-calendar"): permite que la
+    # guia de navegacion cite exactamente lo que el usuario ve en pantalla.
+    icono: str = Field(default="", max_length=50)
 
 
 class ChatAsistenteRequest(BaseModel):
@@ -104,4 +107,7 @@ class ChatAsistenteRequest(BaseModel):
 class ChatAsistenteResponse(BaseModel):
     respuesta: str
     navegar_a: str | None = None
+    # Pasos cortos de "como llegar" por el sidebar (modo guia). Vacia si el
+    # usuario solo pidio ir directo.
+    guia: list[str] = []
     proveedor: str

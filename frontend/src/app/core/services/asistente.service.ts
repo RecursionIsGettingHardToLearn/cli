@@ -13,6 +13,7 @@ export interface RutaAsistente {
   path: string;
   titulo: string;
   descripcion: string;
+  icono: string;
 }
 
 export interface MensajeHistorial {
@@ -23,6 +24,7 @@ export interface MensajeHistorial {
 export interface ChatAsistenteResponse {
   respuesta: string;
   navegar_a: string | null;
+  guia: string[];
   proveedor: string;
 }
 

@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { map } from 'rxjs';
 import { MENU } from './menu-items';
 import { SupabaseService } from '../../core/auth/supabase.service';
+import { NavResaltadoService } from '../../core/services/nav-resaltado.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -22,6 +23,7 @@ import { SupabaseService } from '../../core/auth/supabase.service';
            [routerLink]="item.route"
            routerLinkActive="active"
            class="nav-item"
+           [class.resaltado]="resaltado() === item.route"
            [attr.title]="collapsed ? item.label : null"
            (click)="navItemClick.emit()">
           <i class="pi {{ item.icon }}"></i>
@@ -82,6 +84,17 @@ import { SupabaseService } from '../../core/auth/supabase.service';
     }
     .nav-item:hover { background: rgba(255,255,255,0.08); text-decoration: none; }
     .nav-item.active { background: rgba(255,255,255,0.15); color: white; font-weight: 600; }
+    /* Resaltado desde el chatbot: pulso ambar para ensenarle al usuario donde vive el item */
+    .nav-item.resaltado {
+      background: rgba(255, 209, 102, 0.22);
+      color: #fff;
+      box-shadow: inset 4px 0 0 #ffd166;
+      animation: nav-pulso 0.9s ease-in-out 5;
+    }
+    @keyframes nav-pulso {
+      0%, 100% { background: rgba(255, 209, 102, 0.22); }
+      50%      { background: rgba(255, 209, 102, 0.48); }
+    }
     .nav-item i { width: 18px; text-align: center; flex-shrink: 0; }
     .bottom {
       padding: 16px 20px;
@@ -126,6 +139,8 @@ import { SupabaseService } from '../../core/auth/supabase.service';
   `]
 })
 export class SidebarComponent {
+  private navResaltado = inject(NavResaltadoService);
+  resaltado = this.navResaltado.path;
   @Input() collapsed = false;
   @Input() mobileOpen = false;
   @Output() navItemClick = new EventEmitter<void>();

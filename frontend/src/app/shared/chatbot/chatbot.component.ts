@@ -6,11 +6,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { SupabaseService } from '../../core/auth/supabase.service';
 import { AsistenteService, MensajeHistorial } from '../../core/services/asistente.service';
 import { rutasParaRol } from './nav-catalogo';
+import { NavResaltadoService } from '../../core/services/nav-resaltado.service';
 
 interface MensajeChat {
   autor: 'user' | 'bot';
   texto: string;
-  navTitulo?: string;
+  guia?: string[];
+  destino?: { path: string; titulo: string; icono: string };
 }
 
 /**
@@ -62,9 +64,14 @@ interface MensajeChat {
           class="cb-msg"
           [ngClass]="m.autor === 'user' ? 'user' : 'bot'">
           {{ m.texto }}
-          <div class="cb-nav-tag" *ngIf="m.navTitulo">
-            <i class="pi pi-arrow-right"></i> Abriendo {{ m.navTitulo }}…
-          </div>
+          <ol class="cb-guia" *ngIf="m.guia?.length">
+            <li *ngFor="let paso of m.guia">{{ paso }}</li>
+          </ol>
+          <button class="cb-ir" *ngIf="m.destino" (click)="irA(m.destino!)">
+            <i class="pi {{ m.destino.icono || 'pi-arrow-right' }}"></i>
+            Ir a {{ m.destino.titulo }}
+            <i class="pi pi-arrow-right cb-ir-flecha"></i>
+          </button>
         </div>
 
         <div class="cb-msg bot cb-typing" *ngIf="cargando()">
@@ -125,7 +132,18 @@ interface MensajeChat {
     .cb-msg.bot  { background: #eef2f1; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 4px; }
     .cb-msg.user { background: #0f6e56; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
 
-    .cb-nav-tag { margin-top: 6px; font-size: 12px; font-weight: 600; color: #0f6e56; display: flex; align-items: center; gap: 5px; }
+    .cb-guia { margin: 8px 0 2px; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+    .cb-guia li::marker { color: #0f6e56; font-weight: 700; }
+
+    .cb-ir {
+      margin-top: 9px; display: inline-flex; align-items: center; gap: 8px;
+      border: none; border-radius: 10px; padding: 8px 13px; cursor: pointer;
+      background: #0f6e56; color: #fff; font: inherit; font-weight: 600; font-size: 13px;
+      box-shadow: 0 3px 10px rgba(15, 110, 86, .3);
+      transition: background .12s ease, transform .12s ease;
+    }
+    .cb-ir:hover { background: #0c5a47; transform: translateY(-1px); }
+    .cb-ir-flecha { font-size: 11px; opacity: .85; }
 
     .cb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
     .cb-chip {
@@ -165,6 +183,7 @@ export class ChatbotComponent {
   private router = inject(Router);
   private supabase = inject(SupabaseService);
   private asistente = inject(AsistenteService);
+  private navResaltado = inject(NavResaltadoService);
 
   @ViewChild('mensajesBox') mensajesBox?: ElementRef<HTMLDivElement>;
 
@@ -175,7 +194,7 @@ export class ChatbotComponent {
 
   private rol = toSignal(this.supabase.role$, { initialValue: null });
 
-  sugerencias = ['¿A dónde puedo ir?', 'Llévame a mis citas', '¿Qué hay en reportes?'];
+  sugerencias = ['¿A dónde puedo ir?', 'Llévame a mis citas', '¿Cómo llego a reportes?'];
 
   toggle(): void {
     this.abierto.update(v => !v);
@@ -205,20 +224,24 @@ export class ChatbotComponent {
         texto,
         historial,
         rol,
-        rutas.map(({ path, titulo, descripcion }) => ({ path, titulo, descripcion }))
+        rutas.map(({ path, titulo, descripcion, icono }) => ({ path, titulo, descripcion, icono }))
       )
       .subscribe({
         next: r => {
           this.cargando.set(false);
-          const destino = r.navegar_a ? rutas.find(x => x.path === r.navegar_a) : undefined;
+          const ruta = r.navegar_a ? rutas.find(x => x.path === r.navegar_a) : undefined;
           this.mensajes.update(m => [
             ...m,
-            { autor: 'bot', texto: r.respuesta, navTitulo: destino?.titulo },
+            {
+              autor: 'bot',
+              texto: r.respuesta,
+              guia: r.guia?.length ? r.guia : undefined,
+              destino: ruta
+                ? { path: ruta.path, titulo: ruta.titulo, icono: ruta.icono }
+                : undefined,
+            },
           ]);
           this.scrollAbajo();
-          if (destino) {
-            setTimeout(() => this.router.navigate([destino.path]), 650);
-          }
         },
         error: () => {
           this.cargando.set(false);
@@ -229,6 +252,13 @@ export class ChatbotComponent {
           this.scrollAbajo();
         },
       });
+  }
+
+  /** Click en "Ir a...": navega y resalta el item del sidebar unos segundos. */
+  irA(destino: { path: string; titulo: string; icono: string }): void {
+    this.navResaltado.resaltar(destino.path);
+    this.router.navigate([destino.path]);
+    if (window.innerWidth <= 768) this.abierto.set(false);
   }
 
   private scrollAbajo(): void {
