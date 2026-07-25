@@ -15,7 +15,7 @@ import { NavResaltadoService } from '../../core/services/nav-resaltado.service';
            [class.collapsed]="collapsed"
            [class.mobile-open]="mobileOpen">
       <div class="brand">
-        <i class="pi pi-heart-fill"></i>
+        <img src="assets/icons/icono.svg" alt="Logo de la clinica" class="brand-logo">
         <span class="label">Clinica</span>
       </div>
       <nav>
@@ -69,6 +69,7 @@ import { NavResaltadoService } from '../../core/services/nav-resaltado.service';
       white-space: nowrap;
       overflow: hidden;
     }
+    .brand-logo { width: 28px; height: 28px; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
     nav { flex: 1; padding: 12px 0; overflow-y: auto; overflow-x: hidden; }
     .nav-item {
       display: flex;
