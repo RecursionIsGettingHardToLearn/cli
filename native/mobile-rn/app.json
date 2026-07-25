@@ -83,6 +83,14 @@
         {
           "microphonePermission": "Esta app usa el microfono para generar reportes por voz con IA."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
       ]
     ],
     "extra": {
