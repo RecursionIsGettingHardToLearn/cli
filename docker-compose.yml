@@ -4,7 +4,6 @@ services:
   # ----------------------------------------------------
   frontend:
     image: node:20-alpine
-    container_name: clinica-frontend
     working_dir: /app
     volumes:
       - ./frontend:/app
@@ -19,9 +18,8 @@ services:
   # ----------------------------------------------------
   # Backend: Next.js / BFF (Puerto 3000)
   # ----------------------------------------------------
-  backend:
+  ms-pacientes:
     image: node:20-alpine
-    container_name: clinica-backend
     working_dir: /app
     volumes:
       - ./microservicios/ms-ms-pacientes-nextjs:/app
@@ -31,26 +29,32 @@ services:
       - "3000:3000"
     command: >
       sh -c "npm install && npm run dev"
+    # Next.js dev lee stdin; en un contenedor -d sin TTY recibe EOF y se
+    # apaga solo (exit 0 justo despues de "Starting..."). Esto lo mantiene vivo.
+    stdin_open: true
+    tty: true
     env_file:
       - .env
     environment:
       - NODE_ENV=development
-      # Redireccion de red interna de Docker: Next.js busca a Java por el nombre del contenedor
-      - MS3_URL=http://springboot:8080/graphql
+      # Redireccion de red interna de Docker: Next.js busca a Java por el nombre del servicio
+      - MS3_URL=http://ms-gestion:8080/graphql
       # ms-blockchain por nombre de servicio dentro de la red Docker
       - BLOCKCHAIN_URL=http://ms-blockchain:3001
     depends_on:
-      springboot:
-        condition: service_healthy
+      # dev: no bloqueamos Next.js por la salud de Java (el primer build de
+      # Maven puede tardar mucho con red lenta). Arranca junto; las llamadas
+      # al BFF fallaran hasta que ms-gestion este escuchando en :8080.
+      ms-gestion:
+        condition: service_started
       ms-blockchain:
         condition: service_started
 
   # ----------------------------------------------------
   # Spring Boot: Java / Gestion (Puerto 8080)
   # ----------------------------------------------------
-  springboot:
+  ms-gestion:
     image: maven:3.9.6-eclipse-temurin-21
-    container_name: clinica-springboot
     working_dir: /app
     volumes:
       - ./microservicios/ms-springboot-gestion:/app
@@ -69,15 +73,14 @@ services:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /actuator/health HTTP/1.0\r\n\r\n' >&3 && cat <&3 | grep -q 'UP'"]
       interval: 10s
       timeout: 10s
-      retries: 30
-      start_period: 60s
+      retries: 60
+      start_period: 600s
 
   # ----------------------------------------------------
   # Blockchain: Node.js (Puerto 3001)
   # ----------------------------------------------------
   ms-blockchain:
     image: node:20-alpine
-    container_name: clinica-blockchain
     working_dir: /app
     volumes:
       - ./microservicios/ms-blockchain:/app
@@ -95,7 +98,6 @@ services:
   ms-diagnostico-ia:
     build:
       context: ./microservicios/ms-diagnostico-ia
-    container_name: clinica-ms-diagnostico-ia
     working_dir: /app
     volumes:
       - ./microservicios/ms-diagnostico-ia/app:/app/app
