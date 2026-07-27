@@ -40,6 +40,21 @@ public class ProveedorController {
     }
 
     @MutationMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','FARMACEUTICO')")
+    public Proveedor actualizarProveedor(
+            @Argument UUID id, @Argument String nombre, @Argument String nit,
+            @Argument String telefono, @Argument String email, @Argument String direccion) {
+        Proveedor p = proveedorRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Proveedor", id));
+        if (nombre != null) p.setNombre(nombre);
+        if (nit != null) p.setNit(nit);
+        if (telefono != null) p.setTelefono(telefono);
+        if (email != null) p.setEmail(email);
+        if (direccion != null) p.setDireccion(direccion);
+        return proveedorRepository.save(p);
+    }
+
+    @MutationMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public Proveedor desactivarProveedor(@Argument UUID id) {
         Proveedor p = proveedorRepository.findById(id).orElseThrow(() -> new NotFoundException("Proveedor", id));

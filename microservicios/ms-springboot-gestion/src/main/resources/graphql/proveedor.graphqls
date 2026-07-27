@@ -1,0 +1,22 @@
+type Proveedor {
+  id: UUID!
+  nombre: String!
+  nit: String
+  telefono: String
+  email: String
+  direccion: String
+  activo: Boolean!
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+extend type Query {
+  proveedores: [Proveedor!]!
+  proveedor(id: UUID!): Proveedor
+}
+
+extend type Mutation {
+  crearProveedor(nombre: String!, nit: String, telefono: String, email: String, direccion: String): Proveedor!
+  actualizarProveedor(id: UUID!, nombre: String, nit: String, telefono: String, email: String, direccion: String): Proveedor!
+  desactivarProveedor(id: UUID!): Proveedor!
+}

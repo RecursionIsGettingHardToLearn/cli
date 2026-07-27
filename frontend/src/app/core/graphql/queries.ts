@@ -118,11 +118,49 @@ export const MIS_RECETAS_PACIENTE = gql`
 `;
 
 // === Categorias / Proveedores ===
-export const LIST_CATEGORIAS = gql`query { categorias { id nombre } }`;
+export const LIST_CATEGORIAS = gql`query { categorias { id nombre descripcion } }`;
+
+export const CREATE_CATEGORIA = gql`
+  mutation CrearCategoria($nombre: String!, $descripcion: String) {
+    crearCategoria(nombre: $nombre, descripcion: $descripcion) { id nombre descripcion }
+  }
+`;
+
+export const UPDATE_CATEGORIA = gql`
+  mutation ActualizarCategoria($id: Int!, $nombre: String, $descripcion: String) {
+    actualizarCategoria(id: $id, nombre: $nombre, descripcion: $descripcion) { id nombre descripcion }
+  }
+`;
+
+export const DELETE_CATEGORIA = gql`
+  mutation EliminarCategoria($id: Int!) { eliminarCategoria(id: $id) }
+`;
 
 export const LIST_PROVEEDORES = gql`
   query Proveedores {
-    proveedores { id nombre nit telefono email activo }
+    proveedores { id nombre nit telefono email direccion activo }
+  }
+`;
+
+export const CREATE_PROVEEDOR = gql`
+  mutation CrearProveedor($nombre: String!, $nit: String, $telefono: String, $email: String, $direccion: String) {
+    crearProveedor(nombre: $nombre, nit: $nit, telefono: $telefono, email: $email, direccion: $direccion) {
+      id nombre nit telefono email direccion activo
+    }
+  }
+`;
+
+export const UPDATE_PROVEEDOR = gql`
+  mutation ActualizarProveedor($id: UUID!, $nombre: String, $nit: String, $telefono: String, $email: String, $direccion: String) {
+    actualizarProveedor(id: $id, nombre: $nombre, nit: $nit, telefono: $telefono, email: $email, direccion: $direccion) {
+      id nombre nit telefono email direccion activo
+    }
+  }
+`;
+
+export const DESACTIVAR_PROVEEDOR = gql`
+  mutation DesactivarProveedor($id: UUID!) {
+    desactivarProveedor(id: $id) { id activo }
   }
 `;
 

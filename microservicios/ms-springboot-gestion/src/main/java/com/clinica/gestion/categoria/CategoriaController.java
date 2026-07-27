@@ -2,6 +2,7 @@ package com.clinica.gestion.categoria;
 
 import com.clinica.gestion.common.exception.BusinessException;
 import com.clinica.gestion.common.exception.NotFoundException;
+import com.clinica.gestion.medicamento.MedicamentoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
@@ -16,6 +17,7 @@ import java.util.List;
 public class CategoriaController {
 
     private final CategoriaRepository categoriaRepository;
+    private final MedicamentoRepository medicamentoRepository;
 
     @QueryMapping
     public List<Categoria> categorias() {
@@ -36,5 +38,19 @@ public class CategoriaController {
         if (nombre != null) c.setNombre(nombre);
         if (descripcion != null) c.setDescripcion(descripcion);
         return categoriaRepository.save(c);
+    }
+
+    @MutationMapping
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    public boolean eliminarCategoria(@Argument Integer id) {
+        Categoria c = categoriaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Categoria", id));
+        long enUso = medicamentoRepository.countByCategoriaId(id);
+        if (enUso > 0) {
+            throw new BusinessException(
+                    "No se puede eliminar: " + enUso + " medicamento(s) usan esta categoria");
+        }
+        categoriaRepository.delete(c);
+        return true;
     }
 }

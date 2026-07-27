@@ -46,6 +46,18 @@ export const APP_ROUTES: Routes = [
         loadComponent: () => import('./features/inventario/inventario.component').then(m => m.InventarioComponent)
       },
       {
+        path: 'categorias',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
+        loadComponent: () => import('./features/categorias/categorias.component').then(m => m.CategoriasComponent)
+      },
+      {
+        path: 'proveedores',
+        canActivate: [roleGuard],
+        data: { roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
+        loadComponent: () => import('./features/proveedores/proveedores.component').then(m => m.ProveedoresComponent)
+      },
+      {
         path: 'administracion',
         canActivate: [roleGuard],
         data: { roles: ['ADMINISTRADOR'] },

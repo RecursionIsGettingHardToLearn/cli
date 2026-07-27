@@ -12,6 +12,8 @@ export const MENU: MenuItem[] = [
   { label: 'Caja',           icon: 'pi-shopping-cart', route: '/caja',          roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
   { label: 'Facturas',       icon: 'pi-receipt',       route: '/facturas',      roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
   { label: 'Inventario',     icon: 'pi-box',           route: '/inventario',    roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
+  { label: 'Categorías',     icon: 'pi-tags',          route: '/categorias',    roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
+  { label: 'Proveedores',    icon: 'pi-truck',         route: '/proveedores',   roles: ['ADMINISTRADOR', 'FARMACEUTICO'] },
   { label: 'Administración', icon: 'pi-cog',           route: '/administracion',roles: ['ADMINISTRADOR'] },
   { label: 'Dashboard BI',   icon: 'pi-chart-bar',     route: '/dashboard',     roles: ['ADMINISTRADOR'] },
   { label: 'Mis recetas',    icon: 'pi-file-edit',     route: '/mis-recetas',   roles: ['MEDICO', 'PACIENTE'] },
