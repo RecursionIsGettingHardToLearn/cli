@@ -307,12 +307,55 @@ export const resolvers = {
 
     async actualizarUsuario(_p: unknown, args: { id: string; nombre?: string | null; email?: string | null }, ctx: Ctx) {
       requireRole(ctx, 'ADMINISTRADOR');
-      const data: { nombre?: string; email?: string } = {};
-      if (args.nombre != null && args.nombre.trim()) data.nombre = args.nombre.trim();
-      if (args.email != null && args.email.trim()) data.email = args.email.trim().toLowerCase();
-      if (Object.keys(data).length === 0) {
+
+      const nuevoNombre = args.nombre != null && args.nombre.trim() ? args.nombre.trim() : undefined;
+      const nuevoEmail = args.email != null && args.email.trim() ? args.email.trim().toLowerCase() : undefined;
+      if (nuevoNombre === undefined && nuevoEmail === undefined) {
         throw new GraphQLError('Nada que actualizar', { extensions: { code: 'BAD_USER_INPUT' } });
       }
+
+      const actual = await ctx.prisma.usuario.findUnique({ where: { id: args.id } });
+      if (!actual) throw new GraphQLError('Usuario no encontrado', { extensions: { code: 'NOT_FOUND' } });
+
+      const emailCambia = nuevoEmail !== undefined && nuevoEmail !== actual.email;
+      const nombreCambia = nuevoNombre !== undefined && nuevoNombre !== actual.nombre;
+
+      // Sincronizar con Supabase Auth (Admin API, service role) cuando cambia algo
+      // que tambien vive alla. El email es el critico: sin esto el usuario no
+      // podria volver a loguearse con el correo nuevo. Se hace ANTES de tocar la
+      // BD local: si Supabase rechaza, no dejamos las dos fuentes desincronizadas.
+      if ((emailCambia || nombreCambia) && actual.supabaseUid) {
+        const issuer = process.env.SUPABASE_ISSUER ?? '';
+        const base = (process.env.SUPABASE_URL ?? issuer.replace(/\/auth\/v1\/?$/, '')).replace(/\/$/, '');
+        const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!base || !serviceKey) {
+          throw new GraphQLError(
+            'Falta configurar SUPABASE_SERVICE_ROLE_KEY (y SUPABASE_URL o SUPABASE_ISSUER) en el .env de ms-pacientes',
+            { extensions: { code: 'INTERNAL_SERVER_ERROR' } },
+          );
+        }
+        const payload: Record<string, unknown> = {};
+        if (emailCambia) { payload.email = nuevoEmail; payload.email_confirm = true; }
+        if (nombreCambia) { payload.user_metadata = { name: nuevoNombre }; }
+
+        const resp = await fetch(`${base}/auth/v1/admin/users/${actual.supabaseUid}`, {
+          method: 'PUT',
+          headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const body: any = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          throw new GraphQLError(
+            `Supabase rechazo la actualizacion (${resp.status}): ${body?.msg ?? body?.message ?? JSON.stringify(body)}`,
+            { extensions: { code: 'BAD_USER_INPUT', supabase: body } },
+          );
+        }
+      }
+
+      // Ya sincronizado en Auth (o no hizo falta): persistimos en la BD local.
+      const data: { nombre?: string; email?: string } = {};
+      if (nuevoNombre !== undefined) data.nombre = nuevoNombre;
+      if (nuevoEmail !== undefined) data.email = nuevoEmail;
       return ctx.prisma.usuario.update({ where: { id: args.id }, data });
     },
 

@@ -104,8 +104,8 @@ interface UsuarioRow { id: string; nombre: string; email: string; rol: Rol; acti
             <input type="email" [(ngModel)]="form.email" name="email"
                    required maxlength="150" autocomplete="off">
             <small class="hint-warn">
-              ⚠ El email aquí se cambia solo en la BD de la clínica. Para que el usuario
-              pueda volver a loguearse, también hay que actualizarlo en Supabase Auth.
+              Al cambiar el email se actualiza también en Supabase Auth, así que el
+              usuario podrá loguearse con el correo nuevo.
             </small>
           </label>
           <div *ngIf="editErrorMsg" class="error-banner">{{ editErrorMsg }}</div>
