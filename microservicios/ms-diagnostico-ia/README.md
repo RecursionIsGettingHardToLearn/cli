@@ -4,8 +4,8 @@ Microservicio Python/FastAPI para pre-triaje, analisis de imagenes clinicas y ge
 
 ## Responsabilidades
 
-- Pre-triaje por texto usando Gemini cuando hay API key y reglas locales como fallback.
-- Analisis de imagen con Gemini Vision cuando esta configurado.
+- Pre-triaje por texto usando OpenAI cuando hay API key y reglas locales como fallback.
+- Analisis de imagen con OpenAI Vision (gpt-4o-mini) cuando esta configurado.
 - Gestion documental basica con archivos locales y metadatos en SQLite o DynamoDB.
 - API HTTP lista para conectarse desde la app movil, Angular, Docker y Kubernetes.
 
@@ -58,7 +58,7 @@ AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 ```
 
-Si `S3_BUCKET` esta configurado, los archivos subidos se copian a S3 y el documento guarda `s3_bucket` y `s3_key`. El archivo local se conserva temporalmente para el analisis inmediato con Gemini.
+Si `S3_BUCKET` esta configurado, los archivos subidos se copian a S3 y el documento guarda `s3_bucket` y `s3_key`. El archivo local se conserva temporalmente para el analisis inmediato con OpenAI.
 
 Permisos IAM recomendados para DynamoDB + S3:
 

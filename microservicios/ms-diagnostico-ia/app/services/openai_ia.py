@@ -1,6 +1,6 @@
 """Proveedor OpenAI para pre-triaje y analisis de imagen.
 
-Alternativa a Gemini: usa los MISMOS prompts y normalizadores (ia_common), asi
+Usa los prompts y normalizadores compartidos (ia_common), asi
 que la respuesta es identica y ni el panel Angular ni el movil notan la diferencia
 (salvo por el campo "proveedor", que dira "openai").
 

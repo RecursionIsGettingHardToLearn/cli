@@ -100,7 +100,6 @@ def health(settings: Settings = Depends(get_settings)) -> dict:
         "status": "OK",
         "service": settings.app_name,
         "environment": settings.environment,
-        "gemini": "configured" if settings.gemini_api_key else "fallback",
         "openai": "configured" if settings.openai_api_key else "fallback",
         # Proveedor que atendera el triaje y el analisis de imagen ahora mismo.
         # Si dice "reglas-locales" es que NINGUNA clave esta configurada.

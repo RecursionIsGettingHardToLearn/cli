@@ -1,6 +1,6 @@
 """Prompts y normalizadores compartidos por TODOS los proveedores de IA.
 
-Gemini y OpenAI usan los mismos prompts y pasan su respuesta por los mismos
+OpenAI pasa su respuesta por los mismos
 normalizadores, de modo que la salida sea identica sin importar quien la genere.
 Gracias a esto, el panel Angular y la app movil no necesitan saber que proveedor
 respondio: el contrato de la API no cambia.

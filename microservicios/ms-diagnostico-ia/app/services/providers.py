@@ -1,12 +1,10 @@
 """Cadena de proveedores de IA con degradacion progresiva.
 
-Orden configurable con IA_PROVIDER_ORDER (por defecto "gemini,openai").
-Se intenta cada proveedor en orden; si uno no tiene clave o falla, se pasa al
-siguiente. Si ninguno responde, se usa el analisis por reglas locales, de modo
-que el endpoint NUNCA rompe el flujo del usuario.
+Hoy el unico proveedor es OpenAI. Si no tiene clave o falla, se usa el analisis
+por reglas locales, de modo que el endpoint NUNCA rompe el flujo del usuario.
 
-Esto permite operar solo con OpenAI (sin clave de Gemini), solo con Gemini, con
-ambos (uno como respaldo del otro) o con ninguno (modo reglas, solo demo).
+Se conserva la forma de "cadena" (recorre IA_PROVIDER_ORDER) para poder sumar
+otro proveedor en el futuro sin reescribir los endpoints.
 """
 from __future__ import annotations
 
@@ -15,7 +13,6 @@ from pathlib import Path
 
 from app.config import Settings
 from app.schemas import ChatTriajeResponse
-from app.services.gemini import gemini_image_analysis, gemini_triage
 from app.services.openai_ia import openai_image_analysis, openai_triage
 from app.services.rules import fallback_image_analysis, rule_based_triage
 
@@ -23,8 +20,6 @@ log = logging.getLogger(__name__)
 
 
 def _tiene_clave(settings: Settings, proveedor: str) -> bool:
-    if proveedor == "gemini":
-        return bool(settings.gemini_api_key)
     if proveedor == "openai":
         return bool(settings.openai_api_key)
     return False
@@ -49,15 +44,13 @@ async def analizar_triaje(
         if not _tiene_clave(settings, proveedor):
             continue
         try:
-            if proveedor == "gemini":
-                resultado = await gemini_triage(settings, mensaje, historial)
-            elif proveedor == "openai":
+            if proveedor == "openai":
                 resultado = await openai_triage(settings, mensaje, historial)
             else:
                 continue
             if resultado is not None:
                 return resultado
-        except Exception as exc:  # el proveedor fallo: probamos el siguiente
+        except Exception as exc:  # el proveedor fallo: caemos a reglas locales
             log.warning("Proveedor de triaje '%s' fallo: %s", proveedor, exc)
 
     return rule_based_triage(mensaje)
@@ -74,9 +67,7 @@ async def analizar_imagen(
         if not _tiene_clave(settings, proveedor):
             continue
         try:
-            if proveedor == "gemini":
-                resultado = await gemini_image_analysis(settings, ruta, content_type, descripcion)
-            elif proveedor == "openai":
+            if proveedor == "openai":
                 resultado = await openai_image_analysis(settings, ruta, content_type, descripcion)
             else:
                 continue

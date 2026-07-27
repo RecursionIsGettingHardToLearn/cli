@@ -10,23 +10,17 @@ class Settings(BaseSettings):
     port: int = 8000
     cors_origins: str = "http://localhost:4200,http://localhost:3000,http://localhost:8080"
 
-    gemini_api_key: str | None = None
-    gemini_model: str = "gemini-2.0-flash"
-    gemini_image_model: str = "gemini-2.0-flash"
-    gemini_fallback_models: str = "gemini-2.5-flash,gemini-2.5-flash-lite"
-
-    # OpenAI: reportes por voz (Whisper + chat) Y TAMBIEN pre-triaje y analisis
-    # de imagen (vision), como alternativa a Gemini.
+    # OpenAI es el unico proveedor de IA: reportes por voz (Whisper + chat),
+    # pre-triaje y analisis de imagen (vision).
     openai_api_key: str | None = None
     openai_model: str = "gpt-4o-mini"
     openai_transcribe_model: str = "whisper-1"
     # Modelo multimodal para /api/analizar-imagen. gpt-4o-mini soporta vision.
     openai_vision_model: str = "gpt-4o-mini"
 
-    # Orden de intento de proveedores. El primero con clave configurada manda;
-    # si falla, se prueba el siguiente y al final quedan las reglas locales.
-    # Solo con OpenAI: dejar GEMINI_API_KEY vacia (o poner IA_PROVIDER_ORDER=openai).
-    ia_provider_order: str = "gemini,openai"
+    # Orden de intento de proveedores. Hoy solo existe OpenAI; si no hay clave,
+    # quedan las reglas locales para que el endpoint nunca rompa el flujo.
+    ia_provider_order: str = "openai"
 
     database_url: str = "sqlite:///./data/ms_ia.db"
     upload_dir: str = "./data/uploads"
@@ -49,21 +43,9 @@ class Settings(BaseSettings):
 
     @property
     def ia_provider_list(self) -> list[str]:
-        validos = {"gemini", "openai"}
+        validos = {"openai"}
         orden = [p.strip().lower() for p in self.ia_provider_order.split(",") if p.strip()]
         return [p for p in dict.fromkeys(orden) if p in validos]
-
-    @property
-    def gemini_text_models(self) -> list[str]:
-        models = [self.gemini_model]
-        models.extend(model.strip() for model in self.gemini_fallback_models.split(",") if model.strip())
-        return list(dict.fromkeys(models))
-
-    @property
-    def gemini_image_models(self) -> list[str]:
-        models = [self.gemini_image_model]
-        models.extend(model.strip() for model in self.gemini_fallback_models.split(",") if model.strip())
-        return list(dict.fromkeys(models))
 
 
 @lru_cache
