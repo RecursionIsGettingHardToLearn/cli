@@ -9,6 +9,7 @@ import com.clinica.gestion.medicamento.Medicamento;
 import com.clinica.gestion.medicamento.MedicamentoRepository;
 import com.clinica.gestion.receta.Receta;
 import com.clinica.gestion.receta.RecetaRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class FacturaService {
     private final MedicamentoRepository medicamentoRepository;
     private final RecetaRepository recetaRepository;
     private final InventarioService inventarioService;
+    private final EntityManager em;
 
     @Transactional(readOnly = true)
     public List<Factura> listar() { return facturaRepository.findAll(); }
@@ -142,7 +144,12 @@ public class FacturaService {
     }
 
     private String generarNumero() {
-        long secuencia = facturaRepository.count() + 1;
+        // Secuencia dedicada (ver V4__factura_numero_seq.sql): nextval() nunca
+        // repite ni se revierte con la transaccion, asi que es imposible chocar
+        // con el unique de 'numero', incluso con ventas simultaneas.
+        long secuencia = ((Number) em
+                .createNativeQuery("SELECT nextval('factura_numero_seq')")
+                .getSingleResult()).longValue();
         return "F-" + LocalDate.now().getYear() + "-" + String.format("%06d", secuencia);
     }
 }
