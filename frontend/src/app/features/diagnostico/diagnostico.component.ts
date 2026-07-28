@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { LIST_PACIENTES } from '../../core/graphql/queries';
+import { LIST_PACIENTES, NOTIFICAR_RESULTADO } from '../../core/graphql/queries';
 import { Ms2Service } from '../../core/services/ms2.service';
 
 @Component({
@@ -14,13 +14,6 @@ import { Ms2Service } from '../../core/services/ms2.service';
 
     <div class="card">
       <h3>Analizar estudio</h3>
-      <div class="field">
-        <label>Paciente <span class="req">*</span></label>
-        <select [(ngModel)]="pacienteId" [ngModelOptions]="{standalone:true}" (change)="cargarDiag()">
-          <option [ngValue]="null">— Seleccionar —</option>
-          <option *ngFor="let p of pacientes" [ngValue]="p.id">{{ p.ci }} · {{ p.nombre }} {{ p.apellido }}</option>
-        </select>
-      </div>
       <div class="grid2">
         <div class="field"><label>Imagen del estudio <span class="req">*</span></label>
           <input type="file" accept="image/*" (change)="onFile($event)"></div>
@@ -31,42 +24,50 @@ import { Ms2Service } from '../../core/services/ms2.service';
       </div>
       <div class="field" *ngIf="tipoEstudio === 'Otro'"><label>Especifica el tipo de estudio</label>
         <input [(ngModel)]="tipoEstudioOtro" [ngModelOptions]="{standalone:true}" placeholder="Ej: Mamografía, Endoscopia…"></div>
-      <p class="ayuda">La IA analiza la imagen y da una <strong>lectura preliminar</strong> (hallazgos, urgencia). Es apoyo al médico, no un diagnóstico definitivo.</p>
+      <p class="ayuda">La IA analiza la imagen y da una <strong>lectura preliminar</strong>. Es apoyo al médico, no un diagnóstico definitivo.</p>
       <div *ngIf="error" class="error-banner">{{ error }}</div>
-      <button class="btn-primary" [disabled]="!pacienteId || !file || cargando" (click)="analizar()">
+      <button class="btn-primary" [disabled]="!file || cargando" (click)="analizar()">
         {{ cargando ? 'Analizando…' : 'Analizar con IA' }}
       </button>
 
       <div *ngIf="resultado" class="resultado">
-        <div class="pred">
-          <div>
-            <div class="pred-label">Clasificación (zero-shot)</div>
-            <div class="pred-clase">{{ resultado.clasificacion }}</div>
+        <!-- ============ PARTE 1: SUPERVISADO ============ -->
+        <div class="parte">
+          <div class="parte-h"><span class="parte-num">Parte 1</span> Machine Learning Supervisado — Clasificación</div>
+          <div class="pred">
+            <div>
+              <div class="pred-label">Clase predicha (zero-shot)</div>
+              <div class="pred-clase">{{ resultado.clasificacion }}</div>
+            </div>
+            <div class="pred-prob">{{ (resultado.probabilidad * 100) | number:'1.0-1' }}%</div>
           </div>
-          <div class="pred-prob">{{ (resultado.probabilidad * 100) | number:'1.0-1' }}%</div>
-        </div>
-
-        <div class="clases" *ngIf="resultado.probabilidades?.length">
-          <div class="clase-row" *ngFor="let c of resultado.probabilidades; let i = index">
-            <span class="clase-nom">{{ c.clase }}</span>
-            <div class="barra"><div class="relleno" [class.top]="i===0" [style.width.%]="c.probabilidad * 100"></div></div>
-            <span class="clase-pct">{{ (c.probabilidad * 100) | number:'1.0-1' }}%</span>
-          </div>
-        </div>
-
-        <div class="anomalia" [class.atipico]="resultado.es_anomalo">
-          <div class="anom-top">
-            <span class="anom-label">Detección de anomalías (no supervisado)</span>
-            <span class="anom-verdict" [class.ok]="!resultado.es_anomalo">
-              {{ resultado.es_anomalo ? 'ATÍPICO' : 'NORMAL' }}
-            </span>
-          </div>
-          <div class="anom-bar"><div class="anom-fill" [style.width.%]="resultado.score_anomalia * 100"></div></div>
-          <div class="anom-meta">Score de anomalía: {{ (resultado.score_anomalia * 100) | number:'1.0-1' }}%
-            <span *ngIf="resultado.justificacion_anomalia">· {{ resultado.justificacion_anomalia }}</span>
+          <div class="clases" *ngIf="resultado.probabilidades?.length">
+            <div class="clase-row" *ngFor="let c of resultado.probabilidades; let i = index">
+              <span class="clase-nom">{{ c.clase }}</span>
+              <div class="barra"><div class="relleno" [class.top]="i===0" [style.width.%]="c.probabilidad * 100"></div></div>
+              <span class="clase-pct">{{ (c.probabilidad * 100) | number:'1.0-1' }}%</span>
+            </div>
           </div>
         </div>
 
+        <!-- ============ PARTE 2: NO SUPERVISADO ============ -->
+        <div class="parte">
+          <div class="parte-h"><span class="parte-num">Parte 2</span> Machine Learning No Supervisado — Detección de anomalías</div>
+          <div class="anomalia" [class.atipico]="resultado.es_anomalo">
+            <div class="anom-top">
+              <span class="anom-label">Score de rareza respecto a lo normal</span>
+              <span class="anom-verdict" [class.ok]="!resultado.es_anomalo">
+                {{ resultado.es_anomalo ? 'ATÍPICO' : 'NORMAL' }}
+              </span>
+            </div>
+            <div class="anom-bar"><div class="anom-fill" [style.width.%]="resultado.score_anomalia * 100"></div></div>
+            <div class="anom-meta">Score de anomalía: {{ (resultado.score_anomalia * 100) | number:'1.0-1' }}%
+              <span *ngIf="resultado.justificacion_anomalia">· {{ resultado.justificacion_anomalia }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ APOYO ============ -->
         <div class="detalle">
           <span class="badge" [class.badge-red]="resultado.urgencia==='ALTA'" [class.badge-amber]="resultado.urgencia==='MEDIA'" [class.badge-green]="resultado.urgencia==='BAJA'">Urgencia: {{ resultado.urgencia }}</span>
           <span class="meta">vía {{ resultado.proveedor }} · {{ resultado.tipo_imagen }}</span>
@@ -76,6 +77,25 @@ import { Ms2Service } from '../../core/services/ms2.service';
         </ul>
         <p class="reco"><strong>Recomendación:</strong> {{ resultado.recomendacion }}</p>
       </div>
+    </div>
+
+    <!-- ============ NOTIFICAR AL PACIENTE (tras el resultado) ============ -->
+    <div class="card" *ngIf="resultado">
+      <h3>Notificar resultado al paciente</h3>
+      <p class="ayuda">Si quieres, elige el paciente y envíale una notificación push de que su resultado ya está disponible.</p>
+      <div class="notif-row">
+        <div class="field" style="margin:0; flex:1;">
+          <label>Paciente</label>
+          <select [(ngModel)]="pacienteId" [ngModelOptions]="{standalone:true}" (change)="cargarDiag()">
+            <option [ngValue]="null">— Seleccionar paciente —</option>
+            <option *ngFor="let p of pacientes" [ngValue]="p.id">{{ p.ci }} · {{ p.nombre }} {{ p.apellido }}</option>
+          </select>
+        </div>
+        <button class="btn-primary" [disabled]="!pacienteId || notificando" (click)="notificar()">
+          <i class="pi pi-bell"></i> {{ notificando ? 'Enviando…' : 'Enviar notificación' }}
+        </button>
+      </div>
+      <p *ngIf="notifMsg" class="notif-msg">{{ notifMsg }}</p>
     </div>
 
     <div class="card" *ngIf="pacienteId">
@@ -121,23 +141,22 @@ import { Ms2Service } from '../../core/services/ms2.service';
     .field input, .field select { padding:8px 10px; border:1px solid #d1d5db; border-radius:4px; font-size:14px; background:#fff; }
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:480px; }
     .error-banner { padding:8px 12px; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; border-radius:4px; font-size:13px; margin:10px 0; }
-    .resultado { margin-top:14px; padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e5e7eb; font-size:14px; color:#1f2937; }
-    .pred { display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid #e5e7eb; margin-bottom:12px; }
+    .resultado { margin-top:14px; font-size:14px; color:#1f2937; }
+    .parte { padding:14px 16px; border-radius:8px; background:#f8fafc; border:1px solid #e5e7eb; margin-bottom:12px; }
+    .parte-h { font-size:13px; font-weight:700; color:#0f6e56; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #e5e7eb; }
+    .parte-num { background:#0f6e56; color:#fff; font-size:11px; padding:2px 8px; border-radius:4px; margin-right:8px; }
+    .pred { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
     .pred-label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#6b7280; }
     .pred-clase { font-size:20px; font-weight:700; color:#0f6e56; }
     .pred-prob { font-size:26px; font-weight:700; color:#0f6e56; }
-    .clases { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+    .clases { display:flex; flex-direction:column; gap:6px; }
     .clase-row { display:grid; grid-template-columns:150px 1fr 48px; align-items:center; gap:8px; font-size:12.5px; }
     .clase-nom { color:#374151; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .barra { background:#e5e7eb; border-radius:999px; height:10px; overflow:hidden; }
     .relleno { height:100%; background:#9ca3af; border-radius:999px; transition:width .4s ease; }
     .relleno.top { background:#0f6e56; }
     .clase-pct { text-align:right; font-variant-numeric:tabular-nums; color:#374151; }
-    .detalle { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-    .hallazgos { margin:6px 0; padding-left:18px; font-size:13px; color:#4b5563; }
-    .hallazgos li { margin:2px 0; }
-    .reco { font-size:13px; margin:8px 0 0; }
-    .anomalia { margin:12px 0; padding:12px; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; }
+    .anomalia { padding:12px; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; }
     .anomalia.atipico { background:#fef2f2; border-color:#fecaca; }
     .anom-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
     .anom-label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#6b7280; }
@@ -147,6 +166,12 @@ import { Ms2Service } from '../../core/services/ms2.service';
     .anom-fill { height:100%; background:#16a34a; border-radius:999px; transition:width .4s ease; }
     .anomalia.atipico .anom-fill { background:#dc2626; }
     .anom-meta { font-size:12px; color:#4b5563; margin-top:6px; }
+    .detalle { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .hallazgos { margin:6px 0; padding-left:18px; font-size:13px; color:#4b5563; }
+    .hallazgos li { margin:2px 0; }
+    .reco { font-size:13px; margin:8px 0 0; }
+    .notif-row { display:flex; gap:12px; align-items:flex-end; max-width:640px; }
+    .notif-msg { font-size:13px; margin-top:10px; color:#374151; }
     .badge { font-size:10px; padding:2px 6px; border-radius:3px; font-weight:600; background:#e5e7eb; color:#374151; }
     .badge-green { background:#d1fae5; color:#065f46; }
     .badge-red { background:#fee2e2; color:#991b1b; }
@@ -177,6 +202,8 @@ export class DiagnosticoComponent implements OnInit {
   resultado: any = null;
   diagnosticos: any[] = [];
   pretriajes: any[] = [];
+  notificando = false;
+  notifMsg = '';
 
   ngOnInit() {
     this.apollo.query<any>({ query: LIST_PACIENTES, variables: { q: null } })
@@ -188,17 +215,21 @@ export class DiagnosticoComponent implements OnInit {
     this.file = input.files && input.files.length ? input.files[0] : null;
   }
 
+  private tipoFinal(): string {
+    return this.tipoEstudio === 'Otro' ? (this.tipoEstudioOtro.trim() || 'estudio clínico') : this.tipoEstudio;
+  }
+
   analizar() {
-    if (!this.file || !this.pacienteId) return;
+    if (!this.file) return;
     this.cargando = true;
     this.error = '';
     this.resultado = null;
+    this.notifMsg = '';
 
     const fd = new FormData();
     fd.append('file', this.file);
-    fd.append('paciente_id', this.pacienteId);
-    const tipo = this.tipoEstudio === 'Otro' ? (this.tipoEstudioOtro.trim() || 'estudio clínico') : this.tipoEstudio;
-    fd.append('descripcion', tipo);
+    // Se analiza SIN paciente; el paciente se elige después, solo para notificar.
+    fd.append('descripcion', this.tipoFinal());
 
     this.ms2.diagnosticar(fd).subscribe({
       next: r => {
@@ -217,13 +248,28 @@ export class DiagnosticoComponent implements OnInit {
           proveedor: r.proveedor,
           tipo_imagen: r.tipo_imagen,
         };
-        this.cargarDiag();
       },
       error: e => {
         this.cargando = false;
         this.error = e?.error?.detail || e.message || 'Error al analizar la imagen';
       }
     });
+  }
+
+  notificar() {
+    if (!this.pacienteId) return;
+    this.notificando = true;
+    this.notifMsg = '';
+    this.apollo.mutate<any>({ mutation: NOTIFICAR_RESULTADO, variables: { pacienteId: this.pacienteId, tipoEstudio: this.tipoFinal() } })
+      .subscribe({
+        next: r => {
+          this.notificando = false;
+          this.notifMsg = r.data?.notificarResultado
+            ? '✅ Notificación enviada al paciente.'
+            : '⚠️ El paciente no tiene la app con notificaciones activadas (sin token push).';
+        },
+        error: e => { this.notificando = false; this.notifMsg = 'Error: ' + (e.message || 'no se pudo notificar'); }
+      });
   }
 
   cargarDiag() {

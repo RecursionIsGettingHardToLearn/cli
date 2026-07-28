@@ -312,3 +312,9 @@ export const CREATE_EPISODIO = gql`
     }
   }
 `;
+
+export const NOTIFICAR_RESULTADO = gql`
+  mutation NotificarResultado($pacienteId: ID!, $tipoEstudio: String) {
+    notificarResultado(pacienteId: $pacienteId, tipoEstudio: $tipoEstudio)
+  }
+`;
