@@ -23,7 +23,7 @@ export const MENU: MenuItem[] = [
   { label: 'Historia clínica', icon: 'pi-clipboard', route: '/historia',    roles: ['ADMINISTRADOR', 'MEDICO'] },
   // Nuevos (MS2 REST)
   { label: 'Diagnóstico IA',   icon: 'pi-bolt',      route: '/diagnostico', roles: ['ADMINISTRADOR', 'MEDICO'] },
-  { label: 'Documentos',       icon: 'pi-folder',    route: '/documentos',  roles: ['ADMINISTRADOR', 'MEDICO', 'PACIENTE'] },
+  { label: 'Archivos clínicos', icon: 'pi-folder',   route: '/documentos',  roles: ['ADMINISTRADOR', 'MEDICO', 'PACIENTE'] },
   { label: 'Pre-triaje',       icon: 'pi-upload',    route: '/pre-triaje',  roles: ['PACIENTE'] },
   { label: 'Reportes',         icon: 'pi-chart-line',route: '/reportes',    roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] }
 ];

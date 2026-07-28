@@ -103,6 +103,16 @@ def _upload_to_s3(settings: Settings, path: Path, content_type: str | None) -> t
     return settings.s3_bucket, key
 
 
+def presigned_get_url(settings: Settings, bucket: str, key: str, expires: int = 3600) -> str:
+    """URL temporal y firmada para VER/descargar un objeto de S3 desde el navegador.
+    Expira en `expires` segundos (por defecto 1h)."""
+    return _s3_client(settings).generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket, "Key": key},
+        ExpiresIn=expires,
+    )
+
+
 def _doc_from_item(item: dict[str, Any]) -> DocumentoRecord:
     return DocumentoRecord(
         id=int(item["id"]),

@@ -12,7 +12,7 @@ import { Ms2Service } from '../../core/services/ms2.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <h1 class="page-title">Documentos clínicos</h1>
+    <h1 class="page-title">Archivos clínicos del paciente</h1>
 
     <div class="card" *ngIf="!esPaciente">
       <div class="field">
@@ -51,15 +51,10 @@ import { Ms2Service } from '../../core/services/ms2.service';
             <span class="meta">{{ d.creado_en | date:'short' }}</span>
           </div>
           <div>
-            <button class="btn-link" (click)="verAuditoria(d)">Ver resultado IA</button>
+            <button class="btn-link" (click)="verArchivo(d)"><i class="pi pi-eye"></i> Ver</button>
           </div>
         </div>
-        <div class="meta">documento IA #{{ d.id }} · {{ d.tamano_bytes }} bytes</div>
-
-        <div *ngIf="auditorias[d.id]" class="sub">
-          <strong>Resultado:</strong>
-          <pre>{{ auditorias[d.id] | json }}</pre>
-        </div>
+        <div class="meta">archivo #{{ d.id }} · {{ d.tamano_bytes }} bytes</div>
       </div>
       <p *ngIf="documentos.length === 0" class="empty">Sin documentos.</p>
     </div>
@@ -93,7 +88,6 @@ export class DocumentosComponent implements OnInit {
   pacientes: any[] = [];
   pacienteId: string | null = null;
   documentos: any[] = [];
-  auditorias: Record<string, any[]> = {};
   file: File | null = null;
   showForm = false;
   subiendo = false;
@@ -121,7 +115,6 @@ export class DocumentosComponent implements OnInit {
   }
 
   cargar() {
-    this.auditorias = {};
     if (!this.pacienteId) { this.documentos = []; return; }
     this.ms2.listarDocumentos(this.pacienteId).subscribe({
       next: r => this.documentos = r ?? [], error: () => this.documentos = []
@@ -145,7 +138,9 @@ export class DocumentosComponent implements OnInit {
     });
   }
 
-  verAuditoria(d: any) {
-    this.auditorias[d.id] = d;
+  verArchivo(d: any) {
+    // Abre el archivo en pestaña nueva: MS2 lo sirve desde S3 (URL prefirmada)
+    // o desde disco. El navegador muestra imágenes/PDF o los descarga.
+    window.open(this.ms2.urlArchivo(d.id), '_blank');
   }
 }

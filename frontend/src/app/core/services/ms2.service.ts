@@ -67,6 +67,12 @@ export class Ms2Service {
       this.http.post(`${this.base}/api/documentos`, form, { headers }));
   }
 
+  /** URL directa para ver/descargar un documento (MS2 lo sirve desde S3 o disco).
+   *  Se abre en pestaña nueva; no pasa por XHR, así que no requiere headers. */
+  urlArchivo(documentoId: number): string {
+    return `${this.base}/api/documentos/${documentoId}/archivo`;
+  }
+
   listarDocumentos(pacienteId: string): Observable<any> {
     return this.withAuth(headers =>
       this.http.get(`${this.base}/api/documentos`, { headers, params: { paciente_id: pacienteId } }));

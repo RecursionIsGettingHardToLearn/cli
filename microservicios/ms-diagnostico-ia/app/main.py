@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
@@ -37,6 +38,7 @@ from app.services.storage import (
     list_documents,
     list_results,
     list_results_by_patient,
+    presigned_get_url,
     save_result,
     save_upload,
     update_result_revision,
@@ -238,6 +240,34 @@ def listar_documentos(
 ) -> list[DocumentoResponse]:
     docs = list_documents(db, settings, paciente_id)
     return [documento_to_response(doc) for doc in docs]
+
+
+@app.get("/api/documentos/{documento_id}/archivo")
+def ver_documento(
+    documento_id: int,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+):
+    """Devuelve el archivo para verlo/descargarlo en el navegador.
+    - Si esta en S3: redirige a una URL prefirmada temporal.
+    - Si es local (sqlite): sirve el archivo desde el disco del servicio.
+    """
+    doc = get_document(db, settings, documento_id)
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    if doc.s3_bucket and doc.s3_key:
+        url = presigned_get_url(settings, doc.s3_bucket, doc.s3_key)
+        return RedirectResponse(url, status_code=307)
+
+    ruta = Path(doc.ruta)
+    if not ruta.exists():
+        raise HTTPException(status_code=404, detail="El archivo ya no esta disponible en el servidor")
+    return FileResponse(
+        str(ruta),
+        media_type=doc.content_type or "application/octet-stream",
+        filename=doc.nombre_original,
+    )
 
 
 @app.get("/api/documentos/{documento_id}", response_model=DocumentoResponse)
