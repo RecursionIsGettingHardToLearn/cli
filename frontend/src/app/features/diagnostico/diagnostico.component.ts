@@ -24,14 +24,14 @@ import { Ms2Service } from '../../core/services/ms2.service';
       <div class="grid2">
         <div class="field"><label>Imagen del estudio <span class="req">*</span></label>
           <input type="file" accept="image/*" (change)="onFile($event)"></div>
-        <div class="field"><label>Modelo</label>
-          <select [(ngModel)]="modo" [ngModelOptions]="{standalone:true}">
-            <option value="SUPERVISADO">Supervisado (clasificación)</option>
-            <option value="NO_SUPERVISADO">No supervisado (anomalías)</option>
+        <div class="field"><label>Tipo de estudio</label>
+          <select [(ngModel)]="tipoEstudio" [ngModelOptions]="{standalone:true}">
+            <option *ngFor="let t of tiposEstudio" [value]="t">{{ t }}</option>
           </select></div>
       </div>
-      <div class="field"><label>Tipo de estudio</label>
-        <input [(ngModel)]="tipoEstudio" [ngModelOptions]="{standalone:true}" placeholder="radiografia"></div>
+      <div class="field" *ngIf="tipoEstudio === 'Otro'"><label>Especifica el tipo de estudio</label>
+        <input [(ngModel)]="tipoEstudioOtro" [ngModelOptions]="{standalone:true}" placeholder="Ej: Mamografía, Endoscopia…"></div>
+      <p class="ayuda">La IA analiza la imagen y da una <strong>lectura preliminar</strong> (hallazgos, urgencia). Es apoyo al médico, no un diagnóstico definitivo.</p>
       <div *ngIf="error" class="error-banner">{{ error }}</div>
       <button class="btn-primary" [disabled]="!pacienteId || !file || cargando" (click)="analizar()">
         {{ cargando ? 'Analizando…' : 'Analizar con IA' }}
@@ -82,6 +82,7 @@ import { Ms2Service } from '../../core/services/ms2.service';
     </div>
   `,
   styles: [`
+    .ayuda { font-size:12px; color:#6b7280; margin:10px 0 4px; }
     .field { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; max-width:480px; }
     .field label { font-size:12px; font-weight:600; color:#374151; } .req { color:#dc2626; }
     .field input, .field select { padding:8px 10px; border:1px solid #d1d5db; border-radius:4px; font-size:14px; background:#fff; }
@@ -111,8 +112,9 @@ export class DiagnosticoComponent implements OnInit {
   pacientes: any[] = [];
   pacienteId: string | null = null;
   file: File | null = null;
-  modo = 'SUPERVISADO';
-  tipoEstudio = 'radiografia';
+  tipoEstudio = 'Radiografía';
+  tipoEstudioOtro = '';
+  tiposEstudio = ['Radiografía', 'Tomografía (TC)', 'Ecografía', 'Resonancia (RM)', 'Lesión dermatológica', 'Informe / documento', 'Otro'];
   cargando = false;
   error = '';
   resultado: any = null;
@@ -138,7 +140,8 @@ export class DiagnosticoComponent implements OnInit {
     const fd = new FormData();
     fd.append('file', this.file);
     fd.append('paciente_id', this.pacienteId);
-    fd.append('descripcion', `${this.tipoEstudio} · modo ${this.modo}`);
+    const tipo = this.tipoEstudio === 'Otro' ? (this.tipoEstudioOtro.trim() || 'estudio clínico') : this.tipoEstudio;
+    fd.append('descripcion', tipo);
 
     this.ms2.diagnosticar(fd).subscribe({
       next: r => {
