@@ -33,6 +33,7 @@ import { NavResaltadoService } from '../../core/services/nav-resaltado.service';
       <div class="bottom" *ngIf="user$ | async as u">
         <div class="user-info" *ngIf="!collapsed">
           <div class="user-name">{{ u.nombre }}</div>
+          <div class="user-email" [attr.title]="u.email">{{ u.email }}</div>
           <div class="user-role">{{ u.rol }}</div>
         </div>
         <button class="logout" (click)="logout()" [attr.title]="collapsed ? 'Salir' : null">
@@ -102,6 +103,7 @@ import { NavResaltadoService } from '../../core/services/nav-resaltado.service';
       border-top: 1px solid rgba(255,255,255,0.1);
     }
     .user-name { font-weight: 600; font-size: 13px; }
+    .user-email { font-size: 11px; opacity: 0.75; margin: 1px 0 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .user-role { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
     .logout {
       margin-top: 12px;
