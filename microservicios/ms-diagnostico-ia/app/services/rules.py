@@ -59,9 +59,15 @@ def fallback_image_analysis(filename: str, content_type: str | None) -> dict:
     return {
         "proveedor": "reglas-locales",
         "tipo_imagen": image_kind,
+        "clasificacion": "No concluyente",
+        "probabilidad": 0.35,
+        "probabilidades": [
+            {"clase": "No concluyente", "probabilidad": 0.35},
+            {"clase": "Requiere revisión médica", "probabilidad": 0.65},
+        ],
         "hallazgos": [
             "Archivo recibido correctamente.",
-            "Analisis visual avanzado no disponible sin proveedor multimodal configurado.",
+            "Clasificacion no disponible sin proveedor multimodal configurado.",
         ],
         "urgencia": "MEDIA",
         "recomendacion": "Derivar a revision medica. Adjuntar descripcion clinica para mejorar el triaje.",

@@ -37,11 +37,31 @@ import { Ms2Service } from '../../core/services/ms2.service';
         {{ cargando ? 'Analizando…' : 'Analizar con IA' }}
       </button>
 
-      <div *ngIf="resultado" class="resultado" [class.alerta]="resultado.hallazgo==='anomalo' || resultado.hallazgo==='atipico'">
-        <strong>Sugerencia IA:</strong> {{ resultado.hallazgo }}
-        · confianza {{ (resultado.confianza * 100) | number:'1.0-1' }}%
-        · <span class="badge">{{ resultado.modo }}</span>
-        <span class="meta">modelo {{ resultado.modelo_version }}</span>
+      <div *ngIf="resultado" class="resultado">
+        <div class="pred">
+          <div>
+            <div class="pred-label">Clasificación (zero-shot)</div>
+            <div class="pred-clase">{{ resultado.clasificacion }}</div>
+          </div>
+          <div class="pred-prob">{{ (resultado.probabilidad * 100) | number:'1.0-1' }}%</div>
+        </div>
+
+        <div class="clases" *ngIf="resultado.probabilidades?.length">
+          <div class="clase-row" *ngFor="let c of resultado.probabilidades; let i = index">
+            <span class="clase-nom">{{ c.clase }}</span>
+            <div class="barra"><div class="relleno" [class.top]="i===0" [style.width.%]="c.probabilidad * 100"></div></div>
+            <span class="clase-pct">{{ (c.probabilidad * 100) | number:'1.0-1' }}%</span>
+          </div>
+        </div>
+
+        <div class="detalle">
+          <span class="badge" [class.badge-red]="resultado.urgencia==='ALTA'" [class.badge-amber]="resultado.urgencia==='MEDIA'" [class.badge-green]="resultado.urgencia==='BAJA'">Urgencia: {{ resultado.urgencia }}</span>
+          <span class="meta">vía {{ resultado.proveedor }} · {{ resultado.tipo_imagen }}</span>
+        </div>
+        <ul class="hallazgos" *ngIf="resultado.hallazgos?.length">
+          <li *ngFor="let h of resultado.hallazgos">{{ h }}</li>
+        </ul>
+        <p class="reco"><strong>Recomendación:</strong> {{ resultado.recomendacion }}</p>
       </div>
     </div>
 
@@ -88,8 +108,22 @@ import { Ms2Service } from '../../core/services/ms2.service';
     .field input, .field select { padding:8px 10px; border:1px solid #d1d5db; border-radius:4px; font-size:14px; background:#fff; }
     .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:480px; }
     .error-banner { padding:8px 12px; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; border-radius:4px; font-size:13px; margin:10px 0; }
-    .resultado { margin-top:14px; padding:12px; border-radius:6px; background:#d1fae5; color:#065f46; font-size:14px; }
-    .resultado.alerta { background:#fef3c7; color:#92400e; }
+    .resultado { margin-top:14px; padding:16px; border-radius:8px; background:#f8fafc; border:1px solid #e5e7eb; font-size:14px; color:#1f2937; }
+    .pred { display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid #e5e7eb; margin-bottom:12px; }
+    .pred-label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#6b7280; }
+    .pred-clase { font-size:20px; font-weight:700; color:#0f6e56; }
+    .pred-prob { font-size:26px; font-weight:700; color:#0f6e56; }
+    .clases { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+    .clase-row { display:grid; grid-template-columns:150px 1fr 48px; align-items:center; gap:8px; font-size:12.5px; }
+    .clase-nom { color:#374151; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .barra { background:#e5e7eb; border-radius:999px; height:10px; overflow:hidden; }
+    .relleno { height:100%; background:#9ca3af; border-radius:999px; transition:width .4s ease; }
+    .relleno.top { background:#0f6e56; }
+    .clase-pct { text-align:right; font-variant-numeric:tabular-nums; color:#374151; }
+    .detalle { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .hallazgos { margin:6px 0; padding-left:18px; font-size:13px; color:#4b5563; }
+    .hallazgos li { margin:2px 0; }
+    .reco { font-size:13px; margin:8px 0 0; }
     .badge { font-size:10px; padding:2px 6px; border-radius:3px; font-weight:600; background:#e5e7eb; color:#374151; }
     .badge-green { background:#d1fae5; color:#065f46; }
     .badge-red { background:#fee2e2; color:#991b1b; }
@@ -148,10 +182,14 @@ export class DiagnosticoComponent implements OnInit {
         this.cargando = false;
         this.resultado = {
           id: r.resultado_id,
-          hallazgo: r.hallazgos?.join(' · ') || r.recomendacion,
-          confianza: r.confianza ?? 0,
-          modo: r.proveedor,
-          modelo_version: r.tipo_imagen,
+          clasificacion: r.clasificacion,
+          probabilidad: r.probabilidad ?? 0,
+          probabilidades: r.probabilidades ?? [],
+          hallazgos: r.hallazgos ?? [],
+          urgencia: r.urgencia,
+          recomendacion: r.recomendacion,
+          proveedor: r.proveedor,
+          tipo_imagen: r.tipo_imagen,
         };
         this.cargarDiag();
       },

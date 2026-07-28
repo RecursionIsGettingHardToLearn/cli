@@ -24,16 +24,27 @@ especialidad debe ser una etiqueta corta en MAYUSCULAS.
 
 
 IMAGE_SYSTEM_PROMPT = """
-Analiza la imagen clinica o documento medico de forma prudente para apoyar al medico.
-Puedes recibir radiografias, fotos de lesiones, heridas, documentos clinicos, recetas,
-informes o imagenes no medicas. Identifica el tipo de imagen y describe hallazgos visibles.
-Si la imagen no es medica, dilo claramente. Si es una radiografia o lesion, sugiere posibles
-hallazgos solo como apoyo, nunca como diagnostico definitivo. Recomienda confirmacion por
-profesional y pruebas complementarias cuando corresponda.
-Responde solo JSON valido con:
-tipo_imagen, hallazgos, urgencia, recomendacion, confianza, nota_seguridad.
-hallazgos debe ser SIEMPRE un arreglo de strings.
-urgencia debe ser BAJA, MEDIA o ALTA.
+Actua como un CLASIFICADOR de imagenes clinicas mediante clasificacion zero-shot
+(un modelo vision-lenguaje que clasifica sin entrenamiento previo especifico).
+Puedes recibir radiografias, fotos de lesiones, heridas, documentos clinicos,
+informes o imagenes no medicas.
+
+1) Segun el tipo de estudio, define de 3 a 5 CLASES candidatas plausibles.
+   Ej. radiografia de torax: "Normal", "Neumonia", "Derrame pleural",
+   "Cardiomegalia", "Otro hallazgo". Si la imagen NO es medica, usa clases como
+   "No es imagen medica".
+2) Estima la probabilidad de cada clase (0 a 1) de modo que SUMEN ~1.0, como la
+   salida softmax de un clasificador.
+3) La clase de mayor probabilidad es "clasificacion" y su valor es "probabilidad".
+
+Es solo apoyo, NUNCA un diagnostico definitivo; recomienda confirmacion profesional.
+
+Responde SOLO JSON valido con estas claves:
+clasificacion (string, la clase mas probable),
+probabilidad (number 0 a 1 de esa clase),
+probabilidades (arreglo de objetos {clase, probabilidad}, ordenado de mayor a menor, sumando ~1.0),
+tipo_imagen, hallazgos (arreglo de strings que sustentan la clasificacion),
+urgencia (BAJA, MEDIA o ALTA), recomendacion, nota_seguridad.
 """
 
 
@@ -80,15 +91,42 @@ def build_triage_response(data: dict, proveedor: str) -> ChatTriajeResponse:
     )
 
 
+def _normalizar_probabilidades(raw: object) -> list[dict]:
+    """Deja las clases como salida de clasificador: floats, ordenadas desc y
+    normalizadas para que sumen 1.0 (por si el modelo no lo hizo exacto)."""
+    if not isinstance(raw, list):
+        return []
+    clases: list[dict] = []
+    for item in raw:
+        if isinstance(item, dict) and item.get("clase"):
+            clases.append({
+                "clase": str(item.get("clase")),
+                "probabilidad": max(0.0, safe_float(item.get("probabilidad"), 0.0)),
+            })
+    clases.sort(key=lambda c: c["probabilidad"], reverse=True)
+    total = sum(c["probabilidad"] for c in clases)
+    if total > 0:
+        for c in clases:
+            c["probabilidad"] = round(c["probabilidad"] / total, 4)
+    return clases[:6]
+
+
 def build_image_result(data: dict, proveedor: str) -> dict:
     """Normaliza el analisis de imagen sin importar el proveedor."""
+    probabilidades = _normalizar_probabilidades(data.get("probabilidades"))
+    top = probabilidades[0] if probabilidades else None
+    clasificacion = str(data.get("clasificacion") or (top["clase"] if top else "No concluyente"))
+    probabilidad = safe_float(data.get("probabilidad"), top["probabilidad"] if top else 0.0)
     return {
         "proveedor": proveedor,
         "tipo_imagen": str(data.get("tipo_imagen", "imagen_clinica")),
+        "clasificacion": clasificacion,
+        "probabilidad": probabilidad,
+        "probabilidades": probabilidades,
         "hallazgos": safe_string_list(data.get("hallazgos")),
         "urgencia": safe_urgency(data.get("urgencia")),
         "recomendacion": str(data.get("recomendacion", "Revisar con un profesional de salud.")),
-        "confianza": safe_float(data.get("confianza"), 0.7),
+        "confianza": safe_float(data.get("confianza"), probabilidad or 0.7),
         "nota_seguridad": str(
             data.get("nota_seguridad", "Resultado informativo. No reemplaza evaluacion medica.")
         ),

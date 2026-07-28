@@ -33,11 +33,19 @@ class DocumentoResponse(BaseModel):
     creado_en: datetime
 
 
+class ClaseProbabilidad(BaseModel):
+    clase: str
+    probabilidad: float
+
+
 class ImagenAnalisisResponse(BaseModel):
     resultado_id: int | None = None
     documento: DocumentoResponse | None = None
     proveedor: str
     tipo_imagen: str
+    clasificacion: str = "No concluyente"
+    probabilidad: float = 0.0
+    probabilidades: list[ClaseProbabilidad] = []
     hallazgos: list[str]
     urgencia: str
     recomendacion: str
