@@ -304,3 +304,11 @@ export const HISTORIA_POR_PACIENTE = gql`
     }
   }
 `;
+
+export const CREATE_EPISODIO = gql`
+  mutation CrearEpisodio($input: EpisodioInput!) {
+    crearEpisodio(input: $input) {
+      id fecha medicoUid motivoConsulta evolucion diagnosticoTexto
+    }
+  }
+`;
