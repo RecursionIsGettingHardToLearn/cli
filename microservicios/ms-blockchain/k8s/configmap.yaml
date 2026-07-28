@@ -6,6 +6,6 @@ data:
   NODE_ENV: production
   PORT: "3001"
   # RPC publico de Polygon Amoy (testnet)
-  AMOY_RPC_URL: "https://rpc-amoy.polygon.technology"
+  AMOY_RPC_URL: "https://polygon-amoy.drpc.org"
   # Ajustar con el dominio real del frontend en produccion
   CORS_ORIGINS: "http://localhost:4200"

@@ -12,8 +12,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -49,7 +49,12 @@ public class SecurityConfig {
                             .requestMatchers("/api/pagos/webhook").permitAll()
                             .anyRequest().authenticated())
                     .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(jwtConverter)))
-                    .addFilterAfter(usuarioContextFilter(), UsernamePasswordAuthenticationFilter.class);
+                    // OJO: debe ir despues de BearerTokenAuthenticationFilter, que es quien
+                    // valida el JWT y publica el JwtAuthenticationToken en el SecurityContext.
+                    // Estaba anclado a UsernamePasswordAuthenticationFilter, que en la cadena
+                    // va ANTES del bearer: el filtro corria con auth==null y UsuarioContext
+                    // quedaba vacio -> "Usuario no autenticado" al facturar.
+                    .addFilterAfter(usuarioContextFilter(), BearerTokenAuthenticationFilter.class);
         }
         return http.build();
     }

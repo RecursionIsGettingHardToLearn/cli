@@ -1,3 +1,5 @@
+# Dueño del tipo Proveedor y de sus operaciones (resolvers en ProveedorController).
+# inventario.graphqls solo lo REFERENCIA desde Lote.proveedor.
 type Proveedor {
   id: UUID!
   nombre: String!

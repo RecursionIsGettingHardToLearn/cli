@@ -37,7 +37,7 @@ npm test
 Configura el `.env` (ver `.env.example`):
 
 ```ini
-AMOY_RPC_URL=https://rpc-amoy.polygon.technology
+AMOY_RPC_URL=https://polygon-amoy.drpc.org
 PRIVATE_KEY=0x...            # wallet con MATIC de testnet (faucet)
 # CONTRACT_ADDRESS opcional: si lo dejas vacío, se lee de deployments/amoy.json
 ```
@@ -126,7 +126,7 @@ El microservicio está desplegado en **Azure App Service**:
 Variables de entorno configuradas como *app settings* de la web app:
 
 ```ini
-AMOY_RPC_URL=https://rpc-amoy.polygon.technology
+AMOY_RPC_URL=https://polygon-amoy.drpc.org
 PRIVATE_KEY=<la wallet del sistema, ver .env local>
 CONTRACT_ADDRESS=0xBa43Cc53c22851505179e0163A24E77681374805
 SUPABASE_JWKS_URI=https://yiyfwfvxdseamnelgetf.supabase.co/auth/v1/.well-known/jwks.json

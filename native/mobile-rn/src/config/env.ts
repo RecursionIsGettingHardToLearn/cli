@@ -30,7 +30,7 @@ const devHost = (Constants.expoConfig?.hostUri ?? 'localhost:8081').split(':')[0
 
 // RPC publico de Amoy por defecto: accesible desde cualquier dispositivo con
 // internet (a diferencia de localhost:8545 del viejo nodo Hardhat).
-const DEFAULT_AMOY_RPC = 'https://rpc-amoy.polygon.technology';
+const DEFAULT_AMOY_RPC = 'https://polygon-amoy.drpc.org';
 const DEFAULT_EXPLORER = 'https://amoy.polygonscan.com';
 const AMOY_CHAIN_ID = 80002;
 

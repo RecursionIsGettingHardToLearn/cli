@@ -13,7 +13,7 @@ export const environment = {
   ms2Url: '/ia',
   blockchainUrl: '/blockchain',
   supabase: {
-    url: 'https://yiyfwfvxdseamnelgetf.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeWZ3ZnZ4ZHNlYW1uZWxnZXRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5NTU4MzAsImV4cCI6MjA5NTUzMTgzMH0.oD57Pm5qYafxeB5a9u_z6IW7V7fVypD5gmkUfsmikLg'
+    url: 'https://krrfinxcfahnqbjxzebr.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtycmZpbnhjZmFobnFianh6ZWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4ODg0MjksImV4cCI6MjA5OTQ2NDQyOX0.z3rMtKROfOcC3IriksAmk8VDsaRv1HT0cu_IDdcK5yg'
   }
 };

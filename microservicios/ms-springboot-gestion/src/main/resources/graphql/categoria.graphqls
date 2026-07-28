@@ -1,3 +1,5 @@
+# Dueño del tipo Categoria y de sus operaciones (resolvers en CategoriaController).
+# inventario.graphqls solo lo REFERENCIA desde Medicamento.categoria.
 type Categoria {
   id: Int!
   nombre: String!

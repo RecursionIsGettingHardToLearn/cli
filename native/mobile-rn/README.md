@@ -37,7 +37,7 @@ Edita `app.json` → `expo.extra`:
   "supabaseAnonKey": "sb_publishable_...",
   "graphqlUrl": "http://<IP_DE_TU_PC_EN_LAN>:8080/graphql",
   "blockchainUrl": "http://<IP_DE_TU_PC_EN_LAN>:3001",
-  "amoyRpcUrl": "https://rpc-amoy.polygon.technology",
+  "amoyRpcUrl": "https://polygon-amoy.drpc.org",
   "blockchainContractAddress": "0xBa43Cc53c22851505179e0163A24E77681374805",
   "blockchainChainId": 80002,
   "blockchainExplorerUrl": "https://amoy.polygonscan.com"

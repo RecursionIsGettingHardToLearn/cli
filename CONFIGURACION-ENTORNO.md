@@ -95,7 +95,7 @@ STRIPE_WEBHOOK_SECRET=
 MS3_URL=http://localhost:8080/graphql
 
 # ----- BLOCKCHAIN (ms-blockchain / Polygon Amoy) -----
-AMOY_RPC_URL=https://rpc-amoy.polygon.technology
+AMOY_RPC_URL=https://polygon-amoy.drpc.org
 PRIVATE_KEY=0x1fc9a4224509d2757b6da2eb900b65831385de9f0fd275a0449e5681dbb56fa0
 CONTRACT_ADDRESS=0xBa43Cc53c22851505179e0163A24E77681374805
 ```
@@ -108,7 +108,7 @@ CORS_ORIGINS=http://localhost:4200,http://localhost:8080
 SUPABASE_JWKS_URI=
 
 # Perfil ACTIVO: Polygon Amoy (nube). Contrato ya desplegado.
-AMOY_RPC_URL=https://rpc-amoy.polygon.technology
+AMOY_RPC_URL=https://polygon-amoy.drpc.org
 PRIVATE_KEY=0x1fc9a4224509d2757b6da2eb900b65831385de9f0fd275a0449e5681dbb56fa0
 CONTRACT_ADDRESS=0xBa43Cc53c22851505179e0163A24E77681374805
 ```

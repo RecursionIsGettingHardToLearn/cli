@@ -19,7 +19,7 @@ module.exports = {
       chainId: 31337
     },
     amoy: {
-      url: AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology',
+      url: AMOY_RPC_URL || 'https://polygon-amoy.drpc.org',
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 80002
     }

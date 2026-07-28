@@ -9,7 +9,7 @@ const AMOY_DEPLOYMENT_PATH = path.join(__dirname, '..', '..', 'deployments', 'am
 // RPC publico de Polygon Amoy por defecto. Ya NO usamos un nodo Hardhat local:
 // el microservicio habla siempre con la testnet publica salvo que se sobreescriba
 // AMOY_RPC_URL en el .env.
-const DEFAULT_AMOY_RPC = 'https://rpc-amoy.polygon.technology';
+const DEFAULT_AMOY_RPC = 'https://polygon-amoy.drpc.org';
 
 /**
  * Lee la address del contrato desplegado en Amoy desde deployments/amoy.json.

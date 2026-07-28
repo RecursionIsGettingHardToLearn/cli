@@ -99,7 +99,7 @@
       "graphqlUrl": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/api/graphql",
       "blockchainUrl": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/blockchain",
       "diagnosticosUrl": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/ia",
-      "amoyRpcUrl": "https://rpc-amoy.polygon.technology",
+      "amoyRpcUrl": "https://polygon-amoy.drpc.org",
       "blockchainContractAddress": "0xBa43Cc53c22851505179e0163A24E77681374805",
       "blockchainChainId": 80002,
       "blockchainExplorerUrl": "https://amoy.polygonscan.com",

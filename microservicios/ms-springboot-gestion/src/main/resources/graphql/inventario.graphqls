@@ -1,18 +1,6 @@
-type Categoria {
-  id: Int!
-  nombre: String!
-  descripcion: String
-}
-
-type Proveedor {
-  id: UUID!
-  nombre: String!
-  nit: String
-  telefono: String
-  email: String
-  direccion: String
-  activo: Boolean!
-}
+# Categoria y Proveedor se definen en categoria.graphqls / proveedor.graphqls
+# (sus resolvers viven en CategoriaController / ProveedorController). Aqui solo
+# se referencian desde Medicamento.categoria y Lote.proveedor.
 
 type Medicamento {
   id: UUID!
@@ -71,9 +59,6 @@ type MovimientoInventario {
 }
 
 extend type Query {
-  categorias: [Categoria!]!
-  proveedores: [Proveedor!]!
-  proveedor(id: UUID!): Proveedor
   medicamentos(q: String, activo: Boolean): [Medicamento!]!
   medicamento(id: UUID!): Medicamento
   lotesByMedicamento(medicamentoId: UUID!): [Lote!]!
@@ -81,12 +66,6 @@ extend type Query {
 }
 
 extend type Mutation {
-  crearCategoria(nombre: String!, descripcion: String): Categoria!
-  actualizarCategoria(id: Int!, nombre: String, descripcion: String): Categoria!
-
-  crearProveedor(nombre: String!, nit: String, telefono: String, email: String, direccion: String): Proveedor!
-  desactivarProveedor(id: UUID!): Proveedor!
-
   crearMedicamento(input: MedicamentoInput!): Medicamento!
   actualizarMedicamento(id: UUID!, input: MedicamentoInput!): Medicamento!
   desactivarMedicamento(id: UUID!): Medicamento!

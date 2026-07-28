@@ -81,6 +81,7 @@ pnpm-debug.log*
 # 🐍 Python / MS2 IA
 # -------------------------------------------------------
 **/.venv/
+**/venv/
 **/__pycache__/
 **/*.pyc
 ms-diagnostico-ia/data/

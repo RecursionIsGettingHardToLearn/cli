@@ -30,9 +30,14 @@ services:
     command: >
       sh -c "npm install && npm run dev"
     # Next.js dev lee stdin; en un contenedor -d sin TTY recibe EOF y se
-    # apaga solo (exit 0 justo despues de "Starting..."). Esto lo mantiene vivo.
+    # apaga solo. stdin_open+tty lo mantienen vivo.
+    # (2026-07-26) El "exit 0 silencioso tras Starting..." era un binario
+    # @next/swc-linux-x64-musl TRUNCADO (36MB) en el volumen backend_node_modules
+    # por una npm install interrumpida: next-server moria con SIGBUS al cargarlo.
+    # Se reinstalo el paquete. Si reaparece: rm -rf node_modules/@next/swc-* y npm install.
     stdin_open: true
     tty: true
+    restart: unless-stopped
     env_file:
       - .env
     environment:
