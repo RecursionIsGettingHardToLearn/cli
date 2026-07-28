@@ -79,7 +79,6 @@ import { Ms2Service } from '../../core/services/ms2.service';
     .badge { font-size:10px; padding:2px 6px; border-radius:3px; font-weight:600; background:#e5e7eb; color:#374151; margin-left:6px; }
     .badge-green { background:#d1fae5; color:#065f46; }
     .meta { font-size:11px; color:#6b7280; margin-left:6px; }
-    .btn-link { background:none; border:none; color:#0f6e56; cursor:pointer; text-decoration:underline; font-size:12px; margin-left:8px; }
     .link { color:#0f6e56; cursor:pointer; text-decoration:underline; }
     .sub { margin-top:8px; padding:8px; background:#f9fafb; border-radius:4px; font-size:12px; color:#374151; }
     .empty { color:#6b7280; text-align:center; padding:16px; }

@@ -172,8 +172,7 @@ interface CartItem {
     .total-row { margin: 16px 0; padding: 12px; background: #f0fdf4; border-radius: 4px; text-align: right; font-size: 16px; }
     .field select { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px; background: white; }
     .field select:focus { outline: none; border-color: #0f6e56; box-shadow: 0 0 0 2px rgba(15,110,86,0.15); }
-    .btn-primary { width: 100%; padding: 12px; background: #0f6e56; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { width: 100%; padding: 12px 16px; }
     .success-msg { margin-top: 12px; padding: 8px; background: #d1fae5; color: #065f46; border-radius: 4px; font-size: 13px; }
     .receta-block { margin-top: 6px; padding: 8px; background: #fffbeb; border-radius: 4px; border: 1px solid #fde68a; }
     .receta-input { flex: 1 1 auto; min-width: 130px; font-size: 12px; padding: 5px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-family: monospace; }

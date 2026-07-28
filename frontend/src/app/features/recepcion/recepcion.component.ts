@@ -161,9 +161,6 @@ const EMAIL_REGEX = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
       border: 1px solid #fecaca; border-radius: 4px; font-size: 13px;
     }
     .form-actions { grid-column: span 2; display: flex; justify-content: flex-end; gap: 8px; }
-    .btn-primary { background: #0f6e56; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-secondary { background: white; color: #0f6e56; border: 1px solid #0f6e56; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
     .data-table { width: 100%; border-collapse: collapse; }
     .data-table th, .data-table td { padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: left; }
     .data-table th { background: #f3f4f6; font-weight: 600; font-size: 12px; text-transform: uppercase; color: #6b7280; }

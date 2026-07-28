@@ -330,18 +330,6 @@ interface UsuarioRow { id: string; nombre: string; email: string; rol: Rol; acti
       gap: 8px;
       margin-top: 4px;
     }
-    .btn-primary, .btn-secondary {
-      padding: 8px 16px;
-      border-radius: 4px;
-      font-size: 13px;
-      cursor: pointer;
-      border: 1px solid transparent;
-    }
-    .btn-primary { background: #0f6e56; color: white; }
-    .btn-primary:hover:not(:disabled) { background: #0c5a47; }
-    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-secondary { background: white; color: #374151; border-color: #d1d5db; }
-    .btn-secondary:hover { background: #f3f4f6; }
   `]
 })
 export class AdministracionComponent implements OnInit {

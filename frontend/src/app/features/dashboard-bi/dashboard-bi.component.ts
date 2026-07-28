@@ -125,7 +125,6 @@ import {
     .filters { display: flex; gap: 12px; margin-bottom: 20px; align-items: end; }
     .filters label { display: flex; flex-direction: column; font-size: 12px; color: #6b7280; }
     .filters input { padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; margin-top: 4px; }
-    .btn-primary { background: #0f6e56; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
     .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
     .kpi { background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
     .kpi-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }

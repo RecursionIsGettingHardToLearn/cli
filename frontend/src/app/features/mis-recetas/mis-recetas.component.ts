@@ -185,9 +185,6 @@ import { SaldoBlockchainComponent } from '../saldo-blockchain/saldo-blockchain.c
     .badge-red { background: #fee2e2; color: #991b1b; }
     .badge-green { background: #d1fae5; color: #065f46; }
     .badge-amber { background: #fef3c7; color: #92400e; }
-    .btn-primary { background: #0f6e56; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-    .btn-secondary { background: white; color: #0f6e56; border: 1px solid #0f6e56; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    .btn-link { background: none; border: none; color: #0f6e56; cursor: pointer; text-decoration: underline; }
     .btn-icon { background: none; border: none; color: #a32d2d; cursor: pointer; }
     .tx-info { margin-top: 8px; font-size: 11px; color: #6b7280; }
     .verify-result { margin-top: 8px; font-size: 12px; }

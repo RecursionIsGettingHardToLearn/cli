@@ -76,16 +76,10 @@ interface Categoria { id: number; nombre: string; descripcion?: string | null; }
     .form-grid input:focus { outline: none; border-color: #0f6e56; }
     .form-grid input.invalid { border-color: #dc2626; }
     .form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; }
-    .btn-primary { background: #0f6e56; color: #fff; border: none; border-radius: 6px; padding: 9px 16px; font-weight: 600; cursor: pointer; }
-    .btn-primary:disabled { background: #9ca3af; cursor: default; }
-    .btn-sec { background: #fff; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; padding: 9px 16px; cursor: pointer; }
     .data-table { width: 100%; border-collapse: collapse; }
     .data-table th, .data-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #eef0f2; }
     .data-table th { background: #f3f4f6; font-size: 12px; text-transform: uppercase; color: #6b7280; }
     .acciones { width: 160px; }
-    .btn-link { background: none; border: none; color: #0f6e56; cursor: pointer; font: inherit; padding: 2px 6px; }
-    .btn-link.danger { color: #dc2626; }
-    .btn-link:hover { text-decoration: underline; }
     .muted { color: #9ca3af; }
     .center { text-align: center; }
   `],

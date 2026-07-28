@@ -275,10 +275,6 @@ const CODIGO_LOTE_REGEX = /^[A-Za-z0-9\-]{2,50}$/;
     .badge { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600; margin-right: 4px; }
     .badge-amber { background: #fef3c7; color: #92400e; }
     .badge-red { background: #fee2e2; color: #991b1b; }
-    .btn-primary { background: #0f6e56; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-secondary { background: white; color: #0f6e56; border: 1px solid #0f6e56; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-    .btn-link { background: none; border: none; color: #0f6e56; cursor: pointer; text-decoration: underline; }
     .lotes-panel { margin-top: 20px; padding: 16px; background: #f0fdf4; border-radius: 6px; }
   `]
 })
