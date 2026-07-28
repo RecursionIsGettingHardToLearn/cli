@@ -54,6 +54,19 @@ import { Ms2Service } from '../../core/services/ms2.service';
           </div>
         </div>
 
+        <div class="anomalia" [class.atipico]="resultado.es_anomalo">
+          <div class="anom-top">
+            <span class="anom-label">Detección de anomalías (no supervisado)</span>
+            <span class="anom-verdict" [class.ok]="!resultado.es_anomalo">
+              {{ resultado.es_anomalo ? 'ATÍPICO' : 'NORMAL' }}
+            </span>
+          </div>
+          <div class="anom-bar"><div class="anom-fill" [style.width.%]="resultado.score_anomalia * 100"></div></div>
+          <div class="anom-meta">Score de anomalía: {{ (resultado.score_anomalia * 100) | number:'1.0-1' }}%
+            <span *ngIf="resultado.justificacion_anomalia">· {{ resultado.justificacion_anomalia }}</span>
+          </div>
+        </div>
+
         <div class="detalle">
           <span class="badge" [class.badge-red]="resultado.urgencia==='ALTA'" [class.badge-amber]="resultado.urgencia==='MEDIA'" [class.badge-green]="resultado.urgencia==='BAJA'">Urgencia: {{ resultado.urgencia }}</span>
           <span class="meta">vía {{ resultado.proveedor }} · {{ resultado.tipo_imagen }}</span>
@@ -124,6 +137,16 @@ import { Ms2Service } from '../../core/services/ms2.service';
     .hallazgos { margin:6px 0; padding-left:18px; font-size:13px; color:#4b5563; }
     .hallazgos li { margin:2px 0; }
     .reco { font-size:13px; margin:8px 0 0; }
+    .anomalia { margin:12px 0; padding:12px; border-radius:8px; background:#f0fdf4; border:1px solid #bbf7d0; }
+    .anomalia.atipico { background:#fef2f2; border-color:#fecaca; }
+    .anom-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .anom-label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:#6b7280; }
+    .anom-verdict { font-size:12px; font-weight:700; padding:2px 10px; border-radius:999px; background:#fee2e2; color:#991b1b; }
+    .anom-verdict.ok { background:#dcfce7; color:#166534; }
+    .anom-bar { background:#e5e7eb; border-radius:999px; height:10px; overflow:hidden; }
+    .anom-fill { height:100%; background:#16a34a; border-radius:999px; transition:width .4s ease; }
+    .anomalia.atipico .anom-fill { background:#dc2626; }
+    .anom-meta { font-size:12px; color:#4b5563; margin-top:6px; }
     .badge { font-size:10px; padding:2px 6px; border-radius:3px; font-weight:600; background:#e5e7eb; color:#374151; }
     .badge-green { background:#d1fae5; color:#065f46; }
     .badge-red { background:#fee2e2; color:#991b1b; }
@@ -185,6 +208,9 @@ export class DiagnosticoComponent implements OnInit {
           clasificacion: r.clasificacion,
           probabilidad: r.probabilidad ?? 0,
           probabilidades: r.probabilidades ?? [],
+          score_anomalia: r.score_anomalia ?? 0,
+          es_anomalo: r.es_anomalo ?? false,
+          justificacion_anomalia: r.justificacion_anomalia ?? '',
           hallazgos: r.hallazgos ?? [],
           urgencia: r.urgencia,
           recomendacion: r.recomendacion,

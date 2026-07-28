@@ -65,6 +65,9 @@ def fallback_image_analysis(filename: str, content_type: str | None) -> dict:
             {"clase": "No concluyente", "probabilidad": 0.35},
             {"clase": "Requiere revisión médica", "probabilidad": 0.65},
         ],
+        "score_anomalia": 0.0,
+        "es_anomalo": False,
+        "justificacion_anomalia": "Deteccion de anomalias no disponible sin proveedor multimodal.",
         "hallazgos": [
             "Archivo recibido correctamente.",
             "Clasificacion no disponible sin proveedor multimodal configurado.",

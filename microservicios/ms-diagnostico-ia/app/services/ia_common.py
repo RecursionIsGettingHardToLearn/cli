@@ -39,10 +39,17 @@ informes o imagenes no medicas.
 
 Es solo apoyo, NUNCA un diagnostico definitivo; recomienda confirmacion profesional.
 
+Ademas, actua como un DETECTOR DE ANOMALIAS no supervisado: evalua que tan
+ATIPICA es la imagen respecto a lo esperable/normal para su tipo, con un
+"score_anomalia" de 0 a 1 (0 = tipica/sin desviaciones, 1 = muy atipica). Marca
+"es_anomalo" en true si score_anomalia >= 0.5, y explica brevemente por que en
+"justificacion_anomalia".
+
 Responde SOLO JSON valido con estas claves:
 clasificacion (string, la clase mas probable),
 probabilidad (number 0 a 1 de esa clase),
 probabilidades (arreglo de objetos {clase, probabilidad}, ordenado de mayor a menor, sumando ~1.0),
+score_anomalia (number 0 a 1), es_anomalo (boolean), justificacion_anomalia (string),
 tipo_imagen, hallazgos (arreglo de strings que sustentan la clasificacion),
 urgencia (BAJA, MEDIA o ALTA), recomendacion, nota_seguridad.
 """
@@ -117,12 +124,17 @@ def build_image_result(data: dict, proveedor: str) -> dict:
     top = probabilidades[0] if probabilidades else None
     clasificacion = str(data.get("clasificacion") or (top["clase"] if top else "No concluyente"))
     probabilidad = safe_float(data.get("probabilidad"), top["probabilidad"] if top else 0.0)
+    score_anomalia = min(1.0, max(0.0, safe_float(data.get("score_anomalia"), 0.0)))
+    es_anomalo = bool(data.get("es_anomalo")) if data.get("es_anomalo") is not None else score_anomalia >= 0.5
     return {
         "proveedor": proveedor,
         "tipo_imagen": str(data.get("tipo_imagen", "imagen_clinica")),
         "clasificacion": clasificacion,
         "probabilidad": probabilidad,
         "probabilidades": probabilidades,
+        "score_anomalia": round(score_anomalia, 4),
+        "es_anomalo": es_anomalo,
+        "justificacion_anomalia": str(data.get("justificacion_anomalia", "")),
         "hallazgos": safe_string_list(data.get("hallazgos")),
         "urgencia": safe_urgency(data.get("urgencia")),
         "recomendacion": str(data.get("recomendacion", "Revisar con un profesional de salud.")),

@@ -46,6 +46,9 @@ class ImagenAnalisisResponse(BaseModel):
     clasificacion: str = "No concluyente"
     probabilidad: float = 0.0
     probabilidades: list[ClaseProbabilidad] = []
+    score_anomalia: float = 0.0
+    es_anomalo: bool = False
+    justificacion_anomalia: str = ""
     hallazgos: list[str]
     urgencia: str
     recomendacion: str
