@@ -129,7 +129,7 @@ Variables de entorno configuradas como *app settings* de la web app:
 AMOY_RPC_URL=https://polygon-amoy.drpc.org
 PRIVATE_KEY=<la wallet del sistema, ver .env local>
 CONTRACT_ADDRESS=0xBa43Cc53c22851505179e0163A24E77681374805
-SUPABASE_JWKS_URI=https://yiyfwfvxdseamnelgetf.supabase.co/auth/v1/.well-known/jwks.json
+SUPABASE_JWKS_URI=https://krrfinxcfahnqbjxzebr.supabase.co/auth/v1/.well-known/jwks.json
 # CORS con comodín: cubre los dominios rotativos de los deploys de Vercel
 CORS_ORIGINS=http://localhost:4200,https://*-mat2346s-projects.vercel.app,https://frontendangular*.vercel.app
 SCM_DO_BUILD_DURING_DEPLOYMENT=true
@@ -137,7 +137,7 @@ NODE_ENV=production
 ```
 
 El `SUPABASE_JWKS_URI` debe ser del MISMO proyecto Supabase que usa el
-frontend (`yiyfwfvxdseamnelgetf`), si no, todos los tokens darán 401.
+frontend (`krrfinxcfahnqbjxzebr`), si no, todos los tokens darán 401.
 
 ### Redeploy
 

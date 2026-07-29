@@ -76,7 +76,7 @@ Pasos:
 > (ver §10). Trátalas como comprometidas.
 
 Checklist §2:
-- [x] Proyecto Supabase creado y contraseña guardada en un gestor de secretos. (2 proyectos: krrfinxcfahnqbjxzebr=pacientes, ogsaciyvcfoanbnxedzm=gestion; AUTH sigue en yiyfwfvxdseamnelgetf porque el frontend loguea ahi)
+- [x] Proyecto Supabase creado y contraseña guardada en un gestor de secretos. (2026-07-28: el proyecto de AUTH anterior fue ELIMINADO por Supabase — pausa del free tier — y su DNS ya no resuelve. AUTH + datos de pacientes viven ahora en un unico proyecto: krrfinxcfahnqbjxzebr. Frontend, movil y todos los MS apuntan ahi)
 - [x] Cadenas pooled (6543) y direct (5432) obtenidas. (pooler: aws-0-ca-central-1.pooler.supabase.com — los proyectos estan en Canada, no us-east-1)
 - [x] `Project URL`, `service_role`, `ISSUER` y `JWKS_URI` anotados.
 - [x] Migraciones de MS1 aplicadas (`prisma migrate deploy`). (verificado: 7 tablas; gestion ya tiene esquema y Flyway hara baseline+V2/V3 idempotentes al arrancar)

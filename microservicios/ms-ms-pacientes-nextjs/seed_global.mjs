@@ -5,7 +5,10 @@ import crypto from 'crypto';
 const prisma = new PrismaClient();
 const { Client } = pg;
 
-const javaDbUrl = 'postgresql://postgres.qobedozcifsrfdoktwrv:8FLiKvwU8z%40MJ3%40@aws-1-us-east-1.pooler.supabase.com:5432/postgres';
+// BD de ms_gestion (Spring Boot). Se toma de JAVA_DB_URL para no hardcodear
+// credenciales; por defecto usa el Postgres local, igual que el .env raiz.
+const javaDbUrl =
+  process.env.JAVA_DB_URL ?? 'postgresql://postgres:postgres@localhost:5432/ms_gestion';
 
 async function main() {
   console.log('--- Iniciando Seeding Global ---');

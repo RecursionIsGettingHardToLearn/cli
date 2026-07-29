@@ -28,8 +28,8 @@ Edita `apps/mobile-rn/app.json`:
 
 ```json
 "extra": {
-  "supabaseUrl": "https://yiyfwfvxdseamnelgetf.supabase.co",
-  "supabaseAnonKey": "PEGA_LA_ANON_KEY",
+  "supabaseUrl": "https://krrfinxcfahnqbjxzebr.supabase.co",
+  "supabaseAnonKey": "PEGA_LA_PUBLISHABLE_KEY",
   "graphqlUrl": "http://localhost:4000/graphql",
   "blockchainUrl": "http://localhost:3001",
   "eas": { "projectId": "<TU_EAS_PROJECT_ID>" }//sto se arregla con  npx eas login

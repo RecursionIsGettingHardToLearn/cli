@@ -67,19 +67,27 @@ lo que diga el `.env`):
 
 ```dotenv
 # ----- PACIENTES (Next.js + Prisma / ms_pacientes) -----
-DATABASE_URL="postgresql://postgres.qobedozcifsrfdoktwrv:8FLiKvwU8z%40MJ3%40@aws-1-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.qobedozcifsrfdoktwrv:8FLiKvwU8z%40MJ3%40@aws-1-us-east-1.pooler.supabase.com:5432/postgres"
+# Postgres LOCAL (host). Los contenedores llegan al host via host.docker.internal.
+DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/ms_pacientes"
+DIRECT_URL="postgresql://postgres:postgres@host.docker.internal:5432/ms_pacientes"
 
 # ----- GESTION (Spring Boot / ms_gestion) -----
-DB_URL=jdbc:postgresql://aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
-DB_USER=postgres.qobedozcifsrfdoktwrv
-DB_PASS=8FLiKvwU8z@MJ3@
+DB_URL=jdbc:postgresql://host.docker.internal:5432/ms_gestion
+DB_USER=postgres
+DB_PASS=postgres
 SPRING_PROFILES_ACTIVE=dev
 
-# ----- SUPABASE AUTH (compartido, proyecto yiyfwfvxdseamnelgetf) -----
-SUPABASE_ISSUER=https://yiyfwfvxdseamnelgetf.supabase.co/auth/v1
-SUPABASE_JWKS_URI=https://yiyfwfvxdseamnelgetf.supabase.co/auth/v1/.well-known/jwks.json
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeWZ3ZnZ4ZHNlYW1uZWxnZXRmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTk1NTgzMCwiZXhwIjoyMDk1NTMxODMwfQ.E8r-AMg-PKEG2PtoEU_WlJ1-XMU9-PYEKfFAeQpDui8
+# ----- SUPABASE AUTH (compartido, proyecto krrfinxcfahnqbjxzebr) -----
+# El proyecto anterior fue ELIMINADO por Supabase (pausa free tier) y su DNS
+# ya no resuelve. Los usuarios estan recreados en krrfinxcfahnqbjxzebr.
+SUPABASE_ISSUER=https://krrfinxcfahnqbjxzebr.supabase.co/auth/v1
+SUPABASE_JWKS_URI=https://krrfinxcfahnqbjxzebr.supabase.co/auth/v1/.well-known/jwks.json
+SUPABASE_SERVICE_ROLE_KEY=<service_role del proyecto krrfinxcfahnqbjxzebr — ver .env raiz>
+
+# Si en vez de Postgres local querés apuntar ms-pacientes a Supabase, usá el
+# POOLER (el host directo db.<ref>.supabase.co es IPv6-only y no resuelve):
+#   DATABASE_URL="postgresql://postgres.krrfinxcfahnqbjxzebr:<PW_URL_ENCODED>@aws-0-ca-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+#   DIRECT_URL="postgresql://postgres.krrfinxcfahnqbjxzebr:<PW_URL_ENCODED>@aws-0-ca-central-1.pooler.supabase.com:5432/postgres"
 
 # ----- Integracion entre microservicios -----
 PACIENTES_URL=http://localhost:3000

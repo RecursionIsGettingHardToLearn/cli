@@ -34,14 +34,21 @@ const DEFAULT_AMOY_RPC = 'https://polygon-amoy.drpc.org';
 const DEFAULT_EXPLORER = 'https://amoy.polygonscan.com';
 const AMOY_CHAIN_ID = 80002;
 
+// Ingress de AKS: en un build de release no hay Metro, asi que `devHost` seria
+// "localhost" y la app quedaria sin backend. Por eso fuera de __DEV__ el
+// fallback apunta a la nube.
+const PROD_BASE = 'https://clinica-937b0859.northcentralus.cloudapp.azure.com';
+
 export const env = {
   supabaseUrl: extra.supabaseUrl ?? '',
   supabaseAnonKey: extra.supabaseAnonKey ?? '',
-  // En cli el GraphQL lo sirve Spring Boot directamente (:8080, sin gateway)
-  graphqlUrl: extra.graphqlUrl ?? `http://${devHost}:8080/graphql`,
+  // En cli el gateway GraphQL es el BFF de Next.js (ms-pacientes, :3000)
+  graphqlUrl:
+    extra.graphqlUrl ??
+    (__DEV__ ? `http://${devHost}:3000/api/graphql` : `${PROD_BASE}/api/graphql`),
   // REST del microservicio (opcional: solo se usa como fallback de UUID).
-  blockchainUrl: extra.blockchainUrl ?? `http://${devHost}:3001`,
-  diagnosticosUrl: extra.diagnosticosUrl ?? `http://${devHost}:8000`,
+  blockchainUrl: extra.blockchainUrl ?? (__DEV__ ? `http://${devHost}:3001` : `${PROD_BASE}/blockchain`),
+  diagnosticosUrl: extra.diagnosticosUrl ?? (__DEV__ ? `http://${devHost}:8000` : `${PROD_BASE}/ia`),
 
   // === Blockchain on-chain directo (Polygon Amoy testnet) ===
   amoyRpcUrl: extra.amoyRpcUrl ?? DEFAULT_AMOY_RPC,
