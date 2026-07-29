@@ -137,6 +137,6 @@ export const typeDefs = /* GraphQL */ `
     # (rango calculado en America/La_Paz). Devuelve cuántos push se enviaron.
     enviarRecordatorios: Int!
     # Avisa al paciente que su resultado de estudio ya está disponible.
-    notificarResultado(pacienteId: ID!, tipoEstudio: String): Boolean!
+    notificarResultado(pacienteId: ID!, tipoEstudio: String, titulo: String, mensaje: String): Boolean!
   }
 `;

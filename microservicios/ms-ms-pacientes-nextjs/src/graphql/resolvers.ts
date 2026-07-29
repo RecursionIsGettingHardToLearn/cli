@@ -571,7 +571,7 @@ export const resolvers = {
     // diagnóstico, reenviando el JWT del médico. Roles MEDICO o ADMINISTRADOR.
     async notificarResultado(
       _p: unknown,
-      args: { pacienteId: string; tipoEstudio?: string | null },
+      args: { pacienteId: string; tipoEstudio?: string | null; titulo?: string | null; mensaje?: string | null },
       ctx: Ctx,
     ) {
       requireRole(ctx, 'MEDICO', 'ADMINISTRADOR');
@@ -586,10 +586,12 @@ export const resolvers = {
       });
       if (!u?.expoPushToken) return false;
       const tipo = args.tipoEstudio?.trim() || 'estudio';
+      const titulo = args.titulo?.trim() || 'Resultado disponible 📋';
+      const mensaje = args.mensaje?.trim() || `Tu resultado de ${tipo} ya está disponible`;
       await sendExpoPush(
         u.expoPushToken,
-        'Resultado disponible 📋',
-        `Tu resultado de ${tipo} ya está disponible`,
+        titulo,
+        mensaje,
         { pacienteId: args.pacienteId, tipo: 'resultado' },
       );
       return true;
