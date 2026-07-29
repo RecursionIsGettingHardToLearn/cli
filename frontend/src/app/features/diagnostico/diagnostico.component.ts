@@ -104,7 +104,17 @@ import { Ms2Service } from '../../core/services/ms2.service';
     <!-- ==================== NOTIFICAR ==================== -->
     <div class="card" *ngIf="resSup || resNoSup">
       <h3>Notificar resultado al paciente</h3>
-      <p class="ayuda">Si quieres, elige el paciente y envíale una notificación push de que su resultado ya está disponible.</p>
+      <p class="ayuda">Elige el paciente, escribe el mensaje y envíale una notificación push. Puedes editar el título y el texto que le llegará.</p>
+      <div class="field" style="max-width:640px;">
+        <label>Título de la notificación</label>
+        <input [(ngModel)]="notifTitulo" [ngModelOptions]="{standalone:true}" maxlength="80" placeholder="Resultado disponible 📋">
+      </div>
+      <div class="field" style="max-width:640px;">
+        <label>Mensaje para el paciente</label>
+        <textarea [(ngModel)]="notifMensaje" [ngModelOptions]="{standalone:true}" rows="3" maxlength="300"
+                  placeholder="Ej: Tu radiografía ya fue revisada. Por favor comunícate con la clínica para agendar seguimiento."></textarea>
+        <span class="hint">{{ notifMensaje.length }}/300 · esto es exactamente lo que verá el paciente.</span>
+      </div>
       <div class="notif-row">
         <div class="field" style="margin:0; flex:1;">
           <label>Paciente</label>
@@ -194,6 +204,8 @@ import { Ms2Service } from '../../core/services/ms2.service';
     .hallazgos { margin:6px 0; padding-left:18px; font-size:13px; color:#4b5563; }
     .hallazgos li { margin:2px 0; }
     .reco { font-size:13px; margin:8px 0 0; }
+    .field textarea { padding:8px 10px; border:1px solid #d1d5db; border-radius:4px; font:inherit; font-size:14px; resize:vertical; }
+    .hint { font-size:11px; color:#6b7280; }
     .notif-row { display:flex; gap:12px; align-items:flex-end; max-width:640px; }
     .notif-msg { font-size:13px; margin-top:10px; color:#374151; }
     .badge { font-size:10px; padding:2px 6px; border-radius:3px; font-weight:600; background:#e5e7eb; color:#374151; }
@@ -240,6 +252,8 @@ export class DiagnosticoComponent implements OnInit {
   pretriajes: any[] = [];
   notificando = false;
   notifMsg = '';
+  notifTitulo = 'Resultado disponible 📋';
+  notifMensaje = 'Tu resultado ya fue revisado. Por favor comunícate con la clínica para el seguimiento.';
   private notifTipo = 'estudio';
 
   ngOnInit() {
@@ -312,7 +326,7 @@ export class DiagnosticoComponent implements OnInit {
     if (!this.pacienteId) return;
     this.notificando = true;
     this.notifMsg = '';
-    this.apollo.mutate<any>({ mutation: NOTIFICAR_RESULTADO, variables: { pacienteId: this.pacienteId, tipoEstudio: this.notifTipo } })
+    this.apollo.mutate<any>({ mutation: NOTIFICAR_RESULTADO, variables: { pacienteId: this.pacienteId, tipoEstudio: this.notifTipo, titulo: this.notifTitulo.trim() || null, mensaje: this.notifMensaje.trim() || null } })
       .subscribe({
         next: r => {
           this.notificando = false;
