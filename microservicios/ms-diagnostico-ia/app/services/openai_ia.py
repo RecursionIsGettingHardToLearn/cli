@@ -95,7 +95,9 @@ async def openai_image_analysis(
         return None
 
     imagen_b64 = base64.b64encode(file_path.read_bytes()).decode("ascii")
-    texto = IMAGE_SYSTEM_PROMPT
+    # El system role ya lleva IMAGE_SYSTEM_PROMPT; aqui NO lo repetimos (ahorra
+    # tokens). El texto del usuario solo aporta el contexto clinico opcional.
+    texto = "Analiza la imagen segun las instrucciones del sistema."
     if descripcion:
         texto += f"\nContexto clinico aportado por el usuario: {descripcion}"
 
@@ -103,6 +105,7 @@ async def openai_image_analysis(
         resp = client.chat.completions.create(
             model=settings.openai_vision_model,
             temperature=0.2,
+            max_tokens=700,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": IMAGE_SYSTEM_PROMPT},
@@ -112,7 +115,13 @@ async def openai_image_analysis(
                         {"type": "text", "text": texto},
                         {
                             "type": "image_url",
-                            "image_url": {"url": f"data:{mime};base64,{imagen_b64}"},
+                            # detail="low": la imagen se reduce a 512px y cuesta un
+                            # numero FIJO de tokens (en gpt-4o-mini ~2833) en vez de
+                            # tilearse en "high" (que puede costar 40k+ tokens).
+                            "image_url": {
+                                "url": f"data:{mime};base64,{imagen_b64}",
+                                "detail": "low",
+                            },
                         },
                     ],
                 },
