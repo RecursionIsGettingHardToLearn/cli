@@ -14,7 +14,6 @@ import { LoginScreen } from '../screens/LoginScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { MisRecetasScreen } from '../screens/MisRecetasScreen';
 import { VerificadorRecetaScreen } from '../screens/VerificadorRecetaScreen';
-import { RecursosNativosScreen } from '../screens/RecursosNativosScreen';
 import { ChatTriajeScreen } from '../screens/ChatTriajeScreen';
 import { CitasScreen } from '../screens/CitasScreen';
 import { DiagnosticoIaScreen } from '../screens/DiagnosticoIaScreen';
@@ -43,7 +42,6 @@ const MENU: MenuItem[] = [
   { name: 'Reportes', label: 'Reportes', component: ReportesScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] },
   { name: 'Verificador', label: 'Verificar receta', component: VerificadorRecetaScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO'] },
   { name: 'ChatTriaje', label: 'Asistente IA', component: ChatTriajeScreen, roles: ['PACIENTE'] },
-  { name: 'RecursosNativos', label: 'Recursos del telefono', component: RecursosNativosScreen, roles: ['ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO', 'PACIENTE'] },
 ];
 
 // Contenido del drawer: las opciones del rol + "Cerrar sesion" siempre

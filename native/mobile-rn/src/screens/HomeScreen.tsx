@@ -55,8 +55,6 @@ export function HomeScreen({ navigation }: any) {
         administración y dashboard BI) está disponible en la versión web.
       </Text>
 
-      <Tile label="Recursos del telefono (camara, GPS, biometria, push)" onPress={() => navigation.navigate('RecursosNativos')} />
-
       <TouchableOpacity onPress={signOut} style={styles.logout}>
         <Text style={styles.logoutText}>Cerrar sesion</Text>
       </TouchableOpacity>
