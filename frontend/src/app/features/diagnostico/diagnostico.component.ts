@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { LIST_PACIENTES, NOTIFICAR_RESULTADO } from '../../core/graphql/queries';
+import { LIST_PACIENTES_CON_CUENTA, NOTIFICAR_RESULTADO } from '../../core/graphql/queries';
 import { Ms2Service } from '../../core/services/ms2.service';
 
 @Component({
@@ -104,7 +104,7 @@ import { Ms2Service } from '../../core/services/ms2.service';
     <!-- ==================== NOTIFICAR ==================== -->
     <div class="card" *ngIf="resSup || resNoSup">
       <h3>Notificar resultado al paciente</h3>
-      <p class="ayuda">Elige el paciente, escribe el mensaje y envíale una notificación push. Puedes editar el título y el texto que le llegará.</p>
+      <p class="ayuda">Solo aparecen pacientes <strong>con cuenta</strong> (los únicos que pueden recibir el push). Escribe el título y el mensaje que le llegará.</p>
       <div class="field" style="max-width:640px;">
         <label>Título de la notificación</label>
         <input [(ngModel)]="notifTitulo" [ngModelOptions]="{standalone:true}" maxlength="80" placeholder="Resultado disponible 📋">
@@ -257,7 +257,8 @@ export class DiagnosticoComponent implements OnInit {
   private notifTipo = 'estudio';
 
   ngOnInit() {
-    this.apollo.query<any>({ query: LIST_PACIENTES, variables: { q: null } })
+    // Solo pacientes con cuenta: son los unicos que pueden recibir la notificacion push.
+    this.apollo.query<any>({ query: LIST_PACIENTES_CON_CUENTA })
       .subscribe(r => this.pacientes = r.data?.pacientes ?? []);
   }
 

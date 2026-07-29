@@ -98,7 +98,7 @@ export const typeDefs = /* GraphQL */ `
     me: Usuario
     miPaciente: Paciente
     usuarios: [Usuario!]!
-    pacientes(q: String): [Paciente!]!
+    pacientes(q: String, soloConCuenta: Boolean): [Paciente!]!
     paciente(id: ID!): Paciente
     citas: [Cita!]!
     misCitas: [Cita!]!
