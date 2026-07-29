@@ -170,19 +170,24 @@ export const resolvers = {
       return ctx.prisma.usuario.findMany({ orderBy: { nombre: 'asc' } });
     },
 
-    pacientes(_p: unknown, args: { q?: string }, ctx: Ctx) {
+    pacientes(_p: unknown, args: { q?: string; soloConCuenta?: boolean }, ctx: Ctx) {
       requireRole(ctx, 'ADMINISTRADOR', 'MEDICO', 'FARMACEUTICO');
       const q = args.q?.trim();
+      const conds: any[] = [];
+      if (q) {
+        conds.push({
+          OR: [
+            { ci: { contains: q, mode: 'insensitive' } },
+            { nombre: { contains: q, mode: 'insensitive' } },
+            { apellido: { contains: q, mode: 'insensitive' } },
+          ],
+        });
+      }
+      // soloConCuenta: solo pacientes enlazados a una cuenta (supabaseUid),
+      // que son los unicos que pueden recibir notificaciones push.
+      if (args.soloConCuenta) conds.push({ supabaseUid: { not: null } });
       return ctx.prisma.paciente.findMany({
-        where: q
-          ? {
-              OR: [
-                { ci: { contains: q, mode: 'insensitive' } },
-                { nombre: { contains: q, mode: 'insensitive' } },
-                { apellido: { contains: q, mode: 'insensitive' } },
-              ],
-            }
-          : undefined,
+        where: conds.length ? { AND: conds } : undefined,
         orderBy: { apellido: 'asc' },
       });
     },

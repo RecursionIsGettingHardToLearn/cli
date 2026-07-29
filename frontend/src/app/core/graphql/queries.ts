@@ -48,6 +48,14 @@ export const LIST_PACIENTES = gql`
   }
 `;
 
+export const LIST_PACIENTES_CON_CUENTA = gql`
+  query PacientesConCuenta {
+    pacientes(soloConCuenta: true) {
+      id ci nombre apellido
+    }
+  }
+`;
+
 export const CREATE_PACIENTE = gql`
   mutation CrearPaciente($input: PacienteInput!) {
     crearPaciente(input: $input) { id ci nombre apellido }
