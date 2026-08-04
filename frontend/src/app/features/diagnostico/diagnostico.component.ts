@@ -102,8 +102,8 @@ import { Ms2Service } from '../../core/services/ms2.service';
     </div>
 
     <!-- ==================== NOTIFICAR ==================== -->
-    <div class="card" *ngIf="resSup || resNoSup">
-      <h3>Notificar resultado al paciente</h3>
+    <div class="card">
+      <h3>Notificar al paciente</h3>
       <p class="ayuda">Solo aparecen pacientes <strong>con cuenta</strong> (los únicos que pueden recibir el push). Escribe el título y el mensaje que le llegará.</p>
       <div class="field" style="max-width:640px;">
         <label>Título de la notificación</label>
