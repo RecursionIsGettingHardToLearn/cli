@@ -1,0 +1,352 @@
+{
+  "name": "Agendar cita por Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        16,
+        -128
+      ],
+      "id": "1586ca5e-942d-4bcd-920c-7cde7807af83",
+      "name": "Telegram Trigger",
+      "webhookId": "2da8ae9e-ae26-41b8-85e2-b6b038bcbe09",
+      "credentials": {
+        "telegramApi": {
+          "id": "NhUaySzfulVlgdMf",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://krrfinxcfahnqbjxzebr.supabase.co/auth/v1/token?grant_type=password",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtycmZpbnhjZmFobnFianh6ZWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4ODg0MjksImV4cCI6MjA5OTQ2NDQyOX0.z3rMtKROfOcC3IriksAmk8VDsaRv1HT0cu_IDdcK5yg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"email\": \"admin1@clinica.com\", \"password\": \"admin123\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        224,
+        -128
+      ],
+      "id": "ff42ae45-79c1-49ba-b406-ed9d6e334472",
+      "name": "Login Supabase"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parsea el mensaje: formato ->  CITA <ci> <especialidad> <YYYY-MM-DD> <HH:MM>\n// Ej:  CITA 1000000 cardiologia 2026-08-15 10:00\nconst text = ($('Telegram Trigger').item.json.message.text || '').trim();\n\nconst ci    = (text.match(/\\d{6,8}/) || [''])[0];\nconst fecha = (text.match(/\\d{4}-\\d{2}-\\d{2}/) || [''])[0];\nconst horaM = text.match(/\\b([01]?\\d|2[0-3]):[0-5]\\d\\b/);\nconst hora  = horaM ? horaM[0] : '10:00';\n\n// especialidad = lo que queda tras quitar \"CITA\", el CI, la fecha y la hora\nlet especialidad = text\n  .replace(/^\\/?\\s*cita/i, '')\n  .replace(ci, '')\n  .replace(fecha, '')\n  .replace(hora, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\nif (!especialidad) especialidad = 'general';\n\n// Bolivia es UTC-4. Se arma la fecha ISO con ese offset.\nconst fechaHora = fecha ? `${fecha}T${hora}:00-04:00` : '';\n\nreturn [{ json: { ci, especialidad, fecha, hora, fechaHora } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -128
+      ],
+      "id": "c64c2097-70f7-4d53-88f1-7d3c98d632d0",
+      "name": "Parse mensaje"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://3138-161-138-66-53.ngrok-free.app/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login Supabase').item.json.access_token }}"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"query($q:String){ pacientes(q:$q){ id nombre apellido email } }\",\n  \"variables\": { \"q\": \"{{ $json.ci }}\" }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        -128
+      ],
+      "id": "d4f609d5-eb28-42fe-9d07-a2b7b3e32efa",
+      "name": "Buscar paciente"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.data.pacientes.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $('Parse mensaje').item.json.ci }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c3",
+              "leftValue": "={{ $('Parse mensaje').item.json.fecha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        -128
+      ],
+      "id": "8dbfbc8a-0065-4c4b-91bb-2e195d0e130c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://3138-161-138-66-53.ngrok-free.app/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login Supabase').item.json.access_token }}"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation($input: CitaInput!){ crearCita(input:$input){ id fechaHora especialidad estado } }\",\n  \"variables\": {\n    \"input\": {\n      \"pacienteId\": \"{{ $('Buscar paciente').item.json.data.pacientes[0].id }}\",\n      \"especialidad\": \"{{ $('Parse mensaje').item.json.especialidad }}\",\n      \"fechaHora\": \"{{ $('Parse mensaje').item.json.fechaHora }}\",\n      \"motivo\": \"{{ $('Telegram Trigger').item.json.message.text }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        -128
+      ],
+      "id": "c90a0519-81bf-4c6d-a77e-ca40c13f63d9",
+      "name": "Crear cita"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Buscar paciente').item.json.data.pacientes[0].email }}",
+        "subject": "Cita confirmada en la Clinica",
+        "message": "=Hola {{ $('Buscar paciente').item.json.data.pacientes[0].nombre }}, tu cita quedo agendada.\nFecha: {{ $json.data.crearCita.fechaHora }}\nEspecialidad: {{ $json.data.crearCita.especialidad }}\nMotivo: {{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        -128
+      ],
+      "id": "c1615d41-fe2a-48e1-b518-95a651f7d30c",
+      "name": "Enviar email",
+      "webhookId": "a3d59b1a-9c71-4d53-8044-8a2bd295354e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "O8Xyqz4nR4mTZ44s",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=✅ Tu cita quedo agendada para el {{ $('Crear cita').item.json.data.crearCita.fechaHora }} — especialidad {{ $('Crear cita').item.json.data.crearCita.especialidad }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1488,
+        -128
+      ],
+      "id": "b922a2a8-4eb3-4e72-ab9b-d4a6aa111709",
+      "name": "Confirmar por Telegram",
+      "webhookId": "bac7cd63-c176-4767-a122-a1c0832505d7",
+      "credentials": {
+        "telegramApi": {
+          "id": "NhUaySzfulVlgdMf",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "❌ No pude agendar. Envia asi:  CITA <tu-CI> <especialidad> <AAAA-MM-DD> <HH:MM>\nEj:  CITA 1000000 cardiologia 2026-08-15 10:00",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1008,
+        80
+      ],
+      "id": "fce36093-99b5-4778-87fc-d3af1f13ee7d",
+      "name": "Error por Telegram",
+      "webhookId": "dc1739f5-190f-4aa5-bfb6-76247274756a",
+      "credentials": {
+        "telegramApi": {
+          "id": "NhUaySzfulVlgdMf",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Login Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login Supabase": {
+      "main": [
+        [
+          {
+            "node": "Parse mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse mensaje": {
+      "main": [
+        [
+          {
+            "node": "Buscar paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar paciente": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Crear cita",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error por Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear cita": {
+      "main": [
+        [
+          {
+            "node": "Enviar email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar email": {
+      "main": [
+        [
+          {
+            "node": "Confirmar por Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "605d5d96-48b6-43b6-bed8-623f1881f037",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "483042d952dbf8b2903f67acea3e0bdaddef629ff7e35a4dfe4bf849ba92119f"
+  },
+  "nodeGroups": [],
+  "id": "lOKfFz3RpFWCYPE9",
+  "tags": []
+}

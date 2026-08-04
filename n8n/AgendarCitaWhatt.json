@@ -1,0 +1,355 @@
+{
+  "name": "Wath",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://3138-161-138-66-53.ngrok-free.app/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login Supabase').item.json.access_token }}"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true "
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation($input: CitaInput!){ crearCita(input:$input){ id fechaHora especialidad estado } }\",\n  \"variables\": {\n    \"input\": {\n      \"pacienteId\": \"aaaa1111-aaaa-1111-aaaa-111111111111\",\n      \"especialidad\": \"general\",\n      \"fechaHora\": \"2026-06-05T10:00:00.000Z\",\n      \"motivo\": \"{{ $json.message.text }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -208,
+        112
+      ],
+      "id": "e508b808-68db-47d7-852a-3c1e62f1b588",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Buscar paciente').item.json.data.pacientes[0].email }}",
+        "subject": "Cita confirmada en la Clínica",
+        "message": "=✅ Tu cita quedó agendada para el {{ $('HTTP Request').item.json.data.crearCita.fechaHora }} — especialidad {{ $('HTTP Request').item.json.data.crearCita.especialidad }}\nMotivo: {{ $('WhatsApp Trigger').item.json.messages[0].text.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a00d103d-1315-4609-9c4a-7fef6247a6d0",
+      "name": "Send a message",
+      "webhookId": "4264160e-5d52-4030-973d-32986d0bba7b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "O8Xyqz4nR4mTZ44s",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1d48b061-476b-43b6-8334-37065d529370",
+              "name": "ci",
+              "value": "={{ $('WhatsApp Trigger').item.json.messages[0].text.body.match(/\\d{6,8}/)?.[0] || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -816,
+        96
+      ],
+      "id": "ec1e0af3-eeca-4d95-b0b8-429ab45732c1",
+      "name": "Extraer CI"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://3138-161-138-66-53.ngrok-free.app/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login Supabase').item.json.access_token }}"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true "
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"query($q:String){ pacientes(q:$q){ id nombre apellido email } }\",\n  \"variables\": { \"q\": \"{{ $json.ci }}\" }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -608,
+        112
+      ],
+      "id": "3c8fdfa7-5fae-404f-af64-917b519042ba",
+      "name": "Buscar paciente"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://krrfinxcfahnqbjxzebr.supabase.co/auth/v1/token?grant_type=password",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey ",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtycmZpbnhjZmFobnFianh6ZWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4ODg0MjksImV4cCI6MjA5OTQ2NDQyOX0.z3rMtKROfOcC3IriksAmk8VDsaRv1HT0cu_IDdcK5yg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"email\": \"admin1@clinica.com\", \"password\": \"admin123\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1056,
+        112
+      ],
+      "id": "b06b3bf3-33cd-4aed-9454-425c99bd7ca2",
+      "name": "Login Supabase"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "413bb3f3-148e-4ec2-a305-2dd1ce1c507f",
+              "leftValue": "={{ $json.data.pacientes.length }}",
+              "rightValue": "=0",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "378efe85-6484-408f-90cc-d3ab0bfe6383",
+              "leftValue": "={{ $('Extraer CI').item.json.ci }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        144
+      ],
+      "id": "da056491-9ea4-4048-9ca7-5320381154d2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        128
+      ],
+      "id": "fc4d241e-a97c-41ae-b1ee-a0dc4e0f490b",
+      "name": "WhatsApp Trigger",
+      "webhookId": "2e23b33e-d316-4a5e-8811-181eeb844ec8",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "NkXVhZEPLz5ygbsh",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1115762314960384",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": " ❌ No encontré tu registro. Envía: CITA tu-numero-de-CI y el motivo.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        320
+      ],
+      "id": "c3c143ce-5db5-4115-9696-21f077c3daeb",
+      "name": "Send message",
+      "webhookId": "7ed5d80d-64cd-4538-86ad-9094fec3b8b1",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "Xt9u6MZmdNvq0GH9",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1115762314960384",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
+        "textBody": "=✅ Tu cita quedó agendada para el {{ $('HTTP Request').item.json.data.crearCita.fechaHora }} — especialidad {{ $('HTTP Request').item.json.data.crearCita.especialidad }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        112
+      ],
+      "id": "a31bc54f-d960-431d-98fb-2e6561eeb99b",
+      "name": "Send message1",
+      "webhookId": "014d64bf-43d3-49ae-ac86-213457bcbfc1",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "Xt9u6MZmdNvq0GH9",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer CI": {
+      "main": [
+        [
+          {
+            "node": "Buscar paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar paciente": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login Supabase": {
+      "main": [
+        [
+          {
+            "node": "Extraer CI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Login Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2326ab54-0114-43cc-91fa-1a3c366cebc8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "483042d952dbf8b2903f67acea3e0bdaddef629ff7e35a4dfe4bf849ba92119f"
+  },
+  "nodeGroups": [],
+  "id": "TRKl4eaf4GxqHxga",
+  "tags": []
+}
