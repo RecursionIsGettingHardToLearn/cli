@@ -20,7 +20,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"query\": \"mutation($input: CitaInput!){ crearCita(input:$input){ id fechaHora especialidad estado } }\",\n  \"variables\": {\n    \"input\": {\n      \"pacienteId\": \"aaaa1111-aaaa-1111-aaaa-111111111111\",\n      \"especialidad\": \"general\",\n      \"fechaHora\": \"2026-06-05T10:00:00.000Z\",\n      \"motivo\": \"{{ $json.message.text }}\"\n    }\n  }\n}",
+        "jsonBody": "={\n  \"query\": \"mutation($input: CitaInput!){ crearCita(input:$input){ id fechaHora especialidad estado } }\",\n  \"variables\": {\n    \"input\": {\n      \"pacienteId\": \"{{ $('Buscar paciente').item.json.data.pacientes[0].id }}\",\n      \"especialidad\": \"{{ $('Extraer CI').item.json.especialidad }}\",\n      \"fechaHora\": \"{{ $('Extraer CI').item.json.fechaHora }}\",\n      \"motivo\": \"{{ $('WhatsApp Trigger').item.json.messages[0].text.body }}\"\n    }\n  }\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -57,20 +57,10 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "1d48b061-476b-43b6-8334-37065d529370",
-              "name": "ci",
-              "value": "={{ $('WhatsApp Trigger').item.json.messages[0].text.body.match(/\\d{6,8}/)?.[0] || '' }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
+        "jsCode": "// Parsea el mensaje WhatsApp: CITA <ci> <especialidad> <YYYY-MM-DD> <HH:MM>\n// Ej: CITA 1000000 Cardiologia 2026-08-15 10:18\nconst text = ($('WhatsApp Trigger').item.json.messages[0].text.body || '').trim();\n\nconst ci    = (text.match(/\\d{6,8}/) || [''])[0];\nconst fecha = (text.match(/\\d{4}-\\d{2}-\\d{2}/) || [''])[0];\nconst horaM = text.match(/\\b([01]?\\d|2[0-3]):[0-5]\\d\\b/);\nconst hora  = horaM ? horaM[0] : '10:00';\n\nlet especialidad = text\n  .replace(/^\\/?\\s*cita/i, '')\n  .replace(ci, '')\n  .replace(fecha, '')\n  .replace(hora, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\nif (!especialidad) especialidad = 'general';\n\n// Bolivia UTC-4\nconst fechaHora = fecha ? `${fecha}T${hora}:00-04:00` : '';\n\nreturn [{ json: { ci, especialidad, fecha, hora, fechaHora } }];\n"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         -816,
         96
@@ -158,6 +148,16 @@
             {
               "id": "378efe85-6484-408f-90cc-d3ab0bfe6383",
               "leftValue": "={{ $('Extraer CI').item.json.ci }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c3-fecha",
+              "leftValue": "={{ $('Extraer CI').item.json.fecha }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
