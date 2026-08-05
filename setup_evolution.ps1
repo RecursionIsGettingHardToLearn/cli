@@ -15,7 +15,7 @@ param(
     [switch]$Parar
 )
 
-$BASE_URL   = "http://localhost:8081"
+$BASE_URL   = "http://localhost:8082"
 $API_KEY    = "clinica-evo-key-2026"
 $INSTANCIA  = "clinica"
 $HEADERS    = @{ "apikey" = $API_KEY; "Content-Type" = "application/json" }

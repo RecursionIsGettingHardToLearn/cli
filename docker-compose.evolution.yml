@@ -24,7 +24,7 @@ services:
     container_name: clinica-evolution-api
     restart: unless-stopped
     ports:
-      - "8081:8080"          # 8081 para no chocar con ms-gestion en :8080
+      - "8082:8080"          # 8082 para no chocar con Metro (Expo) en :8081
     environment:
       # Seguridad
       - AUTHENTICATION_TYPE=apikey
@@ -39,7 +39,7 @@ services:
       - WEBSOCKET_GLOBAL_EVENTS=true
 
       # Configuración del servidor
-      - SERVER_URL=http://localhost:8081
+      - SERVER_URL=http://localhost:8082
       - DEL_INSTANCE=false
 
       # Logs

@@ -237,7 +237,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8081/message/sendText/clinica",
+        "url": "http://localhost:8082/message/sendText/clinica",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -268,7 +268,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://localhost:8081/message/sendText/clinica",
+        "url": "http://localhost:8082/message/sendText/clinica",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
