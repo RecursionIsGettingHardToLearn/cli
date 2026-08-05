@@ -205,54 +205,6 @@
     },
     {
       "parameters": {
-        "operation": "send",
-        "phoneNumberId": "1115762314960384",
-        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
-        "textBody": " ❌ No encontré tu registro. Envía: CITA tu-numero-de-CI y el motivo.",
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-base.whatsApp",
-      "typeVersion": 1.1,
-      "position": [
-        -240,
-        320
-      ],
-      "id": "c3c143ce-5db5-4115-9696-21f077c3daeb",
-      "name": "Send message",
-      "webhookId": "7ed5d80d-64cd-4538-86ad-9094fec3b8b1",
-      "credentials": {
-        "whatsAppApi": {
-          "id": "Xt9u6MZmdNvq0GH9",
-          "name": "WhatsApp account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "send",
-        "phoneNumberId": "=1115762314960384",
-        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.messages[0].from }}",
-        "textBody": "=✅ Tu cita quedó agendada para el {{ $('HTTP Request').item.json.data.crearCita.fechaHora }} — especialidad {{ $('HTTP Request').item.json.data.crearCita.especialidad }}",
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-base.whatsApp",
-      "typeVersion": 1.1,
-      "position": [
-        208,
-        112
-      ],
-      "id": "a31bc54f-d960-431d-98fb-2e6561eeb99b",
-      "name": "Send message1",
-      "webhookId": "014d64bf-43d3-49ae-ac86-213457bcbfc1",
-      "credentials": {
-        "whatsAppApi": {
-          "id": "Xt9u6MZmdNvq0GH9",
-          "name": "WhatsApp account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "method": "POST",
         "url": "https://3138-161-138-66-53.ngrok-free.app/api/graphql",
         "sendHeaders": true,
@@ -281,6 +233,68 @@
       ],
       "id": "push-wa-001",
       "name": "Notificar push paciente"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8081/message/sendText/clinica",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "clinica-evo-key-2026"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('WhatsApp Trigger').item.json.messages[0].from }}\",\n  \"text\": \"Tu cita fue agendada exitosamente.\\nFecha: {{ $('HTTP Request').item.json.data.crearCita.fechaHora }}\\nEspecialidad: {{ $('HTTP Request').item.json.data.crearCita.especialidad }}\\nTe esperamos en la Clinica.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        112
+      ],
+      "id": "evo-confirm-001",
+      "name": "Confirmar por WhatsApp"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8081/message/sendText/clinica",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "clinica-evo-key-2026"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('WhatsApp Trigger').item.json.messages[0].from }}\",\n  \"text\": \"No encontre tu registro o el formato es incorrecto.\\nEnvia asi: CITA <tu-CI> <especialidad> <YYYY-MM-DD> <HH:MM>\\nEj: CITA 1000000 Cardiologia 2026-08-15 10:00\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -240,
+        320
+      ],
+      "id": "evo-error-001",
+      "name": "Error por WhatsApp"
     }
   ],
   "pinData": {},
@@ -300,7 +314,7 @@
       "main": [
         [
           {
-            "node": "Send message1",
+            "node": "Confirmar por WhatsApp",
             "type": "main",
             "index": 0
           }
@@ -351,7 +365,7 @@
         ],
         [
           {
-            "node": "Send message",
+            "node": "Error por WhatsApp",
             "type": "main",
             "index": 0
           }

@@ -1,0 +1,55 @@
+# ============================================================
+#  Evolution API — WhatsApp no oficial vía QR (como WhatsApp Web)
+#  Alternativa a la API oficial de Meta (sin verificación de empresa)
+#
+#  LEVANTAR:
+#    docker compose -f docker-compose.evolution.yml up -d
+#
+#  DETENER:
+#    docker compose -f docker-compose.evolution.yml down
+#
+#  LOGS:
+#    docker compose -f docker-compose.evolution.yml logs -f
+#
+#  ESCANEAR QR:
+#    Abre http://localhost:8081 en el navegador
+#    Ve a Instances → tu instancia → Connect → escanea el QR con WhatsApp
+#
+#  API KEY para n8n: clinica-evo-key-2026
+# ============================================================
+
+services:
+  evolution-api:
+    image: atendai/evolution-api:latest
+    container_name: clinica-evolution-api
+    restart: unless-stopped
+    ports:
+      - "8081:8080"          # 8081 para no chocar con ms-gestion en :8080
+    environment:
+      # Seguridad
+      - AUTHENTICATION_TYPE=apikey
+      - AUTHENTICATION_API_KEY=clinica-evo-key-2026
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+
+      # Base de datos (usa SQLite por defecto — sin Postgres extra)
+      - DATABASE_ENABLED=false
+
+      # WebSocket para QR en tiempo real
+      - WEBSOCKET_ENABLED=true
+      - WEBSOCKET_GLOBAL_EVENTS=true
+
+      # Configuración del servidor
+      - SERVER_URL=http://localhost:8081
+      - DEL_INSTANCE=false
+
+      # Logs
+      - LOG_LEVEL=ERROR
+      - LOG_COLOR=true
+
+    volumes:
+      - evolution_instances:/evolution/instances
+      - evolution_store:/evolution/store
+
+volumes:
+  evolution_instances:
+  evolution_store:
