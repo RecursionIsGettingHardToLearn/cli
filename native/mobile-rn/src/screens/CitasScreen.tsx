@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { useQuery, useMutation } from '@apollo/client';
 import { useAuth } from '../auth/AuthContext';
 import {
@@ -51,6 +51,13 @@ export function CitasScreen() {
   });
 
   const [showForm, setShowForm] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   const todas: any[] = (esAdmin || esMedico ? data?.citas : data?.misCitas) ?? [];
   const citas: any[] = esMedico
@@ -68,6 +75,14 @@ export function CitasScreen() {
         data={pag.items}
         onEndReached={pag.cargarMas}
         onEndReachedThreshold={0.4}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primary]}
+            tintColor={COLORS.primary}
+          />
+        }
         ListFooterComponent={<PiePaginacion {...pag.pie} />}
         keyExtractor={(c) => c.id}
         contentContainerStyle={{ padding: 12, paddingBottom: 40 }}
@@ -89,9 +104,14 @@ export function CitasScreen() {
                 }}
               />
             )}
-            <SectionTitle>
-              {esAdmin ? 'Todas las citas' : esMedico ? 'Mi agenda' : 'Mis citas'} ({citas.length})
-            </SectionTitle>
+            <View style={st.titleRow}>
+              <SectionTitle>
+                {esAdmin ? 'Todas las citas' : esMedico ? 'Mi agenda' : 'Mis citas'} ({citas.length})
+              </SectionTitle>
+              <TouchableOpacity onPress={onRefresh} style={st.reloadBtn} disabled={refreshing}>
+                <Text style={st.reloadText}>{refreshing ? '...' : '🔄 Recargar'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         }
         ListEmptyComponent={<EmptyState message="No hay citas para mostrar." />}
@@ -263,6 +283,25 @@ function NuevaCitaForm({
 }
 
 const st = StyleSheet.create({
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  reloadBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  reloadText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 15, fontWeight: '700', color: COLORS.text, flex: 1, marginRight: 8 },
   fecha: { fontSize: 13, color: COLORS.primary, fontWeight: '600', marginTop: 6 },
