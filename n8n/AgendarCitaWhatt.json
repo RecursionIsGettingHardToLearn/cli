@@ -250,6 +250,37 @@
           "name": "WhatsApp account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://3138-161-138-66-53.ngrok-free.app/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login Supabase').item.json.access_token }}"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation($pid:ID!,$titulo:String,$msg:String){ notificarResultado(pacienteId:$pid,titulo:$titulo,mensaje:$msg) }\",\n  \"variables\": {\n    \"pid\": \"{{ $('Buscar paciente').item.json.data.pacientes[0].id }}\",\n    \"titulo\": \"Cita confirmada\",\n    \"msg\": \"Tu cita fue agendada: {{ $('HTTP Request').item.json.data.crearCita.fechaHora }} - {{ $('HTTP Request').item.json.data.crearCita.especialidad }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        80
+      ],
+      "id": "push-wa-001",
+      "name": "Notificar push paciente"
     }
   ],
   "pinData": {},
@@ -258,7 +289,7 @@
       "main": [
         [
           {
-            "node": "Send a message",
+            "node": "Notificar push paciente",
             "type": "main",
             "index": 0
           }
@@ -332,6 +363,17 @@
         [
           {
             "node": "Login Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar push paciente": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
             "type": "main",
             "index": 0
           }
