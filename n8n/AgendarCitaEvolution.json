@@ -1,0 +1,409 @@
+{
+  "name": "Agendar cita WhatsApp (Evolution API)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-clinica",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        0
+      ],
+      "id": "wh-evo-001",
+      "name": "Webhook Evolution",
+      "webhookId": "whatsapp-clinica-evo"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Evolution API webhook -> estructura del mensaje:\n// body.data.message.conversation (texto plano)\n// body.data.key.remoteJid (numero@s.whatsapp.net)\n// Filtramos mensajes propios (fromMe=true) para no responder en bucle.\nconst data = $json.body?.data ?? $json.data ?? {};\nconst fromMe = data.key?.fromMe === true;\nconst remoteJid = data.key?.remoteJid || '';\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\nconst text = (data.message?.conversation\n  || data.message?.extendedTextMessage?.text\n  || '').trim();\n\nconst ci    = (text.match(/\\d{6,8}/) || [''])[0];\nconst fecha = (text.match(/\\d{4}-\\d{2}-\\d{2}/) || [''])[0];\nconst horaM = text.match(/\\b([01]?\\d|2[0-3]):[0-5]\\d\\b/);\nconst hora  = horaM ? horaM[0] : '10:00';\n\nlet especialidad = text\n  .replace(/^\\/?\\s*cita/i, '')\n  .replace(ci, '')\n  .replace(fecha, '')\n  .replace(hora, '')\n  .replace(/\\s+/g, ' ')\n  .trim();\nif (!especialidad) especialidad = 'general';\n\nconst fechaHora = fecha ? `${fecha}T${hora}:00-04:00` : '';\nconst esCita = /^\\/?\\s*cita/i.test(text);\n\nreturn [{ json: { numero, text, ci, especialidad, fecha, hora, fechaHora, fromMe, esCita } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "parse-evo-001",
+      "name": "Parse mensaje"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f1",
+              "leftValue": "={{ $json.fromMe }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "f2",
+              "leftValue": "={{ $json.esCita }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -20,
+        0
+      ],
+      "id": "filtro-evo-001",
+      "name": "Es solicitud de cita"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://krrfinxcfahnqbjxzebr.supabase.co/auth/v1/token?grant_type=password",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "REEMPLAZAR_CON_ANON_KEY_DE_krrfinxcfahnqbjxzebr"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"email\": \"admin1@clinica.com\", \"password\": \"admin123\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        200,
+        -100
+      ],
+      "id": "login-evo-001",
+      "name": "Login Supabase"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login Supabase').item.json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"query($q:String){ pacientes(q:$q){ id nombre apellido email } }\",\n  \"variables\": { \"q\": \"{{ $('Parse mensaje').item.json.ci }}\" }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        420,
+        -100
+      ],
+      "id": "buscar-evo-001",
+      "name": "Buscar paciente"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.data.pacientes.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $('Parse mensaje').item.json.fecha }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        640,
+        -100
+      ],
+      "id": "if-evo-001",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login Supabase').item.json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation($input: CitaInput!){ crearCita(input:$input){ id fechaHora especialidad estado } }\",\n  \"variables\": {\n    \"input\": {\n      \"pacienteId\": \"{{ $('Buscar paciente').item.json.data.pacientes[0].id }}\",\n      \"especialidad\": \"{{ $('Parse mensaje').item.json.especialidad }}\",\n      \"fechaHora\": \"{{ $('Parse mensaje').item.json.fechaHora }}\",\n      \"motivo\": \"{{ $('Parse mensaje').item.json.text }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        860,
+        -160
+      ],
+      "id": "cita-evo-001",
+      "name": "Crear cita"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/api/graphql",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login Supabase').item.json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"mutation($pid:ID!,$titulo:String,$msg:String){ notificarResultado(pacienteId:$pid,titulo:$titulo,mensaje:$msg) }\",\n  \"variables\": {\n    \"pid\": \"{{ $('Buscar paciente').item.json.data.pacientes[0].id }}\",\n    \"titulo\": \"Cita confirmada\",\n    \"msg\": \"Tu cita fue agendada: {{ $('Crear cita').item.json.data.crearCita.fechaHora }} - {{ $('Crear cita').item.json.data.crearCita.especialidad }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1080,
+        -160
+      ],
+      "id": "push-evo-001",
+      "name": "Notificar push paciente"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://acc3-161-56-17-4.ngrok-free.app/message/sendText/clinica",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "clinica123"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Parse mensaje').item.json.numero }}\",\n  \"text\": \"✅ Tu cita fue agendada para el {{ $('Crear cita').item.json.data.crearCita.fechaHora }} — {{ $('Crear cita').item.json.data.crearCita.especialidad }}. Te esperamos en la Clínica.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1300,
+        -160
+      ],
+      "id": "confirmar-evo-001",
+      "name": "Confirmar por WhatsApp"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://acc3-161-56-17-4.ngrok-free.app/message/sendText/clinica",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "clinica123"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $('Parse mensaje').item.json.numero }}\",\n  \"text\": \"❌ No pude agendar tu cita. Envía así: CITA <tu-CI> <especialidad> <AAAA-MM-DD> <HH:MM>\\nEj: CITA 1000000 cardiologia 2026-08-20 10:00\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        860,
+        60
+      ],
+      "id": "error-evo-001",
+      "name": "Error por WhatsApp"
+    }
+  ],
+  "connections": {
+    "Webhook Evolution": {
+      "main": [
+        [
+          {
+            "node": "Parse mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse mensaje": {
+      "main": [
+        [
+          {
+            "node": "Es solicitud de cita",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Es solicitud de cita": {
+      "main": [
+        [
+          {
+            "node": "Login Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Login Supabase": {
+      "main": [
+        [
+          {
+            "node": "Buscar paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar paciente": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Crear cita",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear cita": {
+      "main": [
+        [
+          {
+            "node": "Notificar push paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notificar push paciente": {
+      "main": [
+        [
+          {
+            "node": "Confirmar por WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
