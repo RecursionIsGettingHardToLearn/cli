@@ -297,6 +297,29 @@
       ],
       "id": "error-evo-001",
       "name": "Error por WhatsApp"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Buscar paciente').item.json.data.pacientes[0].email }}",
+        "subject": "Cita confirmada en la Clinica",
+        "message": "=Hola {{ $('Buscar paciente').item.json.data.pacientes[0].nombre }}, tu cita quedo agendada.\nFecha: {{ $('Crear cita').item.json.data.crearCita.fechaHora }}\nEspecialidad: {{ $('Crear cita').item.json.data.crearCita.especialidad }}\nMotivo: {{ $('Parse mensaje').item.json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1300,
+        20
+      ],
+      "id": "email-evo-001",
+      "name": "Enviar email",
+      "webhookId": "a3d59b1a-9c71-4d53-8044-8a2bd295354e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "O8Xyqz4nR4mTZ44s",
+          "name": "Gmail account"
+        }
+      }
     }
   ],
   "connections": {
@@ -386,6 +409,17 @@
       ]
     },
     "Notificar push paciente": {
+      "main": [
+        [
+          {
+            "node": "Enviar email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar email": {
       "main": [
         [
           {
