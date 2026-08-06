@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: evolution-api
+  labels:
+    app: evolution-api
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # No RollingUpdate: la sesión de WhatsApp es exclusiva
+  selector:
+    matchLabels:
+      app: evolution-api
+  template:
+    metadata:
+      labels:
+        app: evolution-api
+    spec:
+      containers:
+        - name: evolution-api
+          image: atendai/evolution-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: evolution-api-config
+            - secretRef:
+                name: evolution-api-secret
+          volumeMounts:
+            - name: instances
+              mountPath: /evolution/instances
+            - name: store
+              mountPath: /evolution/store
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 512Mi
+      volumes:
+        - name: instances
+          persistentVolumeClaim:
+            claimName: evolution-instances-pvc
+        - name: store
+          persistentVolumeClaim:
+            claimName: evolution-store-pvc

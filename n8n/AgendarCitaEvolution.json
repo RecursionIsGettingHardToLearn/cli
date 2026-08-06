@@ -231,7 +231,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://acc3-161-56-17-4.ngrok-free.app/message/sendText/clinica",
+        "url": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/evolution/message/sendText/clinica",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -266,7 +266,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://acc3-161-56-17-4.ngrok-free.app/message/sendText/clinica",
+        "url": "https://clinica-937b0859.northcentralus.cloudapp.azure.com/evolution/message/sendText/clinica",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

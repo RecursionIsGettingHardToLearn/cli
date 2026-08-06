@@ -104,6 +104,13 @@ spec:
                 name: ms-blockchain
                 port:
                   number: 3001
+          - path: /evolution(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: evolution-api
+                port:
+                  number: 8080
     - http:
         paths:
           - path: /gestion(/|$)(.*)
@@ -127,3 +134,10 @@ spec:
                 name: ms-blockchain
                 port:
                   number: 3001
+          - path: /evolution(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: evolution-api
+                port:
+                  number: 8080
