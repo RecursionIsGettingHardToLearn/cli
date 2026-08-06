@@ -16,7 +16,7 @@ param(
 )
 
 $BASE_URL   = "http://localhost:8082"
-$API_KEY    = "clinica-evo-key-2026"
+$API_KEY    = "clinica123"
 $INSTANCIA  = "clinica"
 $HEADERS    = @{ "apikey" = $API_KEY; "Content-Type" = "application/json" }
 $COMPOSE    = "docker-compose.evolution.yml"
@@ -67,21 +67,21 @@ if ($QR) {
             Write-Host ""
             Write-Host "  Escanea este QR con WhatsApp (Settings → Linked Devices):" -ForegroundColor Yellow
             Write-Host ""
-            # Abrir el QR en el navegador
-            Start-Process "http://localhost:8081/instance/qrcode/$INSTANCIA/image"
-            Ok "QR abierto en el navegador. Escanéalo con WhatsApp en 30 segundos."
+            # Abrir el manager en el navegador (el QR se ve alli)
+            Start-Process "$BASE_URL/manager"
+            Ok "Manager abierto en el navegador. Escanea el QR con WhatsApp en 30 segundos."
         } else {
             $estado = $r.instance.state ?? $r.state ?? "desconocido"
             if ($estado -eq "open") {
                 Ok "Ya está conectado (estado: open). No necesitas escanear de nuevo."
             } else {
                 Warn "Estado: $estado"
-                Info "Intenta abrir manualmente: http://localhost:8081"
+                Info "Intenta abrir manualmente: $BASE_URL/manager"
             }
         }
     } catch {
         Err "Error al obtener QR: $_"
-        Info "Abre manualmente: http://localhost:8081"
+        Info "Abre manualmente: $BASE_URL/manager"
     }
     exit 0
 }
@@ -102,7 +102,7 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 Ok "Docker disponible"
 
 # 2. Levantar contenedor
-Write-Host "  Levantando Evolution API (puerto 8081)..." -ForegroundColor White
+Write-Host "  Levantando Evolution API (puerto 8082)..." -ForegroundColor White
 docker compose -f $COMPOSE up -d 2>&1 | Out-Null
 Start-Sleep -Seconds 5
 

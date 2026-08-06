@@ -243,11 +243,15 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "clinica-evo-key-2026"
+              "value": "clinica123"
             },
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
             }
           ]
         },
@@ -274,11 +278,15 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "clinica-evo-key-2026"
+              "value": "clinica123"
             },
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "ngrok-skip-browser-warning",
+              "value": "true"
             }
           ]
         },

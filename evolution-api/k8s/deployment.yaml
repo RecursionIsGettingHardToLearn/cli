@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: evolution-api
-          image: atendai/evolution-api:latest
+          image: evoapicloud/evolution-api:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

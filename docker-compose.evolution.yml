@@ -1,6 +1,10 @@
 # ============================================================
-#  Evolution API — WhatsApp no oficial vía QR (como WhatsApp Web)
+#  Evolution API v2 — WhatsApp no oficial vía QR (como WhatsApp Web)
 #  Alternativa a la API oficial de Meta (sin verificación de empresa)
+#
+#  OJO: Evolution API v2 EXIGE una base de datos (postgres). El intento
+#  anterior con DATABASE_ENABLED=false crash-loopeaba con
+#  "Error: Database provider invalid." — v2 ignora esa variable de v1.
 #
 #  LEVANTAR:
 #    docker compose -f docker-compose.evolution.yml up -d
@@ -11,28 +15,49 @@
 #  LOGS:
 #    docker compose -f docker-compose.evolution.yml logs -f
 #
-#  ESCANEAR QR:
-#    Abre http://localhost:8081 en el navegador
-#    Ve a Instances → tu instancia → Connect → escanea el QR con WhatsApp
+#  ESCANEAR QR (manager web integrado de v2):
+#    Abre http://localhost:8082/manager  (API key: clinica123)
+#    Instances → clinica → Connect → escanea el QR con WhatsApp
 #
-#  API KEY para n8n: clinica-evo-key-2026
+#  API KEY para n8n: clinica123
 # ============================================================
 
 services:
   evolution-api:
-    image: atendai/evolution-api:latest
+    image: evoapicloud/evolution-api:latest
     container_name: clinica-evolution-api
     restart: unless-stopped
+    depends_on:
+      - evolution-postgres
     ports:
-      - "8082:8080"          # 8082 para no chocar con Metro (Expo) en :8081
+      - "8082:8080"          # 8082: el 8080 lo usa ms-gestion y el 8081 Metro/Expo
     environment:
       # Seguridad
       - AUTHENTICATION_TYPE=apikey
-      - AUTHENTICATION_API_KEY=clinica-evo-key-2026
+      - AUTHENTICATION_API_KEY=clinica123
       - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
 
-      # Base de datos (usa SQLite por defecto — sin Postgres extra)
-      - DATABASE_ENABLED=false
+      # Base de datos (obligatoria en v2)
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://evolution:evolution@evolution-postgres:5432/evolution?schema=public
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution_clinica
+      # Persistir la sesion de WhatsApp para no re-escanear el QR en cada reinicio
+      - DATABASE_SAVE_DATA_INSTANCE=true
+      # No guardar historico (mantiene la DB chica)
+      - DATABASE_SAVE_DATA_NEW_MESSAGE=false
+      - DATABASE_SAVE_MESSAGE_UPDATE=false
+      - DATABASE_SAVE_DATA_CONTACTS=false
+      - DATABASE_SAVE_DATA_CHATS=false
+      - DATABASE_SAVE_DATA_LABELS=false
+      - DATABASE_SAVE_DATA_HISTORIC=false
+
+      # Cache en memoria local (sin redis extra)
+      - CACHE_REDIS_ENABLED=false
+      - CACHE_LOCAL_ENABLED=true
+
+      # Webhooks (n8n)
+      - WEBHOOK_GLOBAL_ENABLED=true
 
       # WebSocket para QR en tiempo real
       - WEBSOCKET_ENABLED=true
@@ -41,6 +66,8 @@ services:
       # Configuración del servidor
       - SERVER_URL=http://localhost:8082
       - DEL_INSTANCE=false
+      - LANGUAGE=es
+      - CONFIG_SESSION_PHONE_CLIENT=Clinica
 
       # Logs
       - LOG_LEVEL=ERROR
@@ -48,8 +75,23 @@ services:
 
     volumes:
       - evolution_instances:/evolution/instances
-      - evolution_store:/evolution/store
+
+  # Sin container_name a proposito: ya existe un contenedor viejo llamado
+  # "clinica-evolution-db" de otro proyecto y chocaria (compose lo namespacea
+  # como cli-evolution-postgres-1).
+  evolution-postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=evolution
+      - POSTGRES_PASSWORD=evolution
+      - POSTGRES_DB=evolution
+    volumes:
+      - evolution_pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"
 
 volumes:
   evolution_instances:
   evolution_store:
+  evolution_pgdata:
